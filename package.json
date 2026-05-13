@@ -1,0 +1,12 @@
+{
+  "name": "etipets-serpapi-proxy",
+  "version": "1.0.0",
+  "description": "SerpApi proxy server for ETi Pets Google Reviews Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
