@@ -535,9 +535,10 @@ function analyzeReviewsLocal(realReviews) {
   // 關鍵字庫
   const posWords = ['棒','好','讚','優','喜歡','推薦','滿意','親切','專業','乾淨','整潔','用心','貼心','溫柔','耐心','細心','開心','快樂','舒適','方便','齊全','豐富','新鮮','健康','活潑'];
   const negWords = ['差','爛','糟','貴','慢','髒','臭','吵','擠','小','少','舊','壞','死','病','臭','爛','失望','不好','不滿','抱怨','投訴','問題','改善','很差','不推'];
-  const proMap = {5:'服務優質親切', 4:'整體表現良好', 3:'環境尚可整潔', 2:'服務態度待改善', 1:'整體品質需提升'};
-  const conMap = {5:null, 4:'偶有小缺點', 3:'服務效率待提升', 2:'商品品質不穩定', 1:'服務態度差'};
-  const tipMap = {5:null, 4:'持續維持水準', 3:'加強服務速度', 2:'培訓服務人員', 1:'全面改善服務流程'};
+  // 正評才顯示優點，負評只顯示缺點與建議
+  const proMap = {5:'服務優質親切', 4:'整體表現良好', 3:'環境尚可整潔', 2:null, 1:null};
+  const conMap = {5:null, 4:null, 3:'服務效率待提升', 2:'商品品質不穩定', 1:'服務態度差'};
+  const tipMap = {5:null, 4:null, 3:'加強服務速度', 2:'培訓服務人員', 1:'全面改善服務流程'};
 
   const analyzed = realReviews.slice(0,15).map((r,i) => {
     const stars = r.rating || 5;
@@ -741,9 +742,10 @@ function realReviewCard(r, i) {
     </div>
     <div class="rv-text">${r.snippet || r.text || '（此評論無文字內容）'}</div>
     <div class="rv-analysis">
-      ${a.pros?`<div class="av"><span class="al p">✅ 優點</span><span class="ac">${a.pros}</span></div>`:''}
+      ${a.pros && a.sentiment !== 'negative' ?`<div class="av"><span class="al p">✅ 優點</span><span class="ac">${a.pros}</span></div>`:''}
       ${a.cons?`<div class="av"><span class="al c">⚠️ 缺點</span><span class="ac">${a.cons}</span></div>`:''}
       ${a.tip?`<div class="av"><span class="al t">💡 建議</span><span class="ac">${a.tip}</span></div>`:''}
+      ${!a.pros && !a.cons && !a.tip ? `<div style="font-size:.76rem;color:var(--muted)">✨ 顧客滿意，無特別缺點</div>` : ''}
     </div>
   </div>`;
 }
