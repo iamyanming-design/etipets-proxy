@@ -176,7 +176,16 @@ input.fi{flex:1;min-width:200px}
       <p>即時抓取 Google Maps 真實評論 · AI 智能分析 · 9區 108店 · 5/13更新</p>
     </div>
   </div>
-  <div class="hdr-badge"><div class="live-dot"></div>LIVE 真實評論</div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <div style="display:flex;align-items:center;gap:10px;font-size:.72rem;background:rgba(255,255,255,.06);padding:7px 14px;border-radius:8px;border:1px solid var(--border)">
+      <span style="display:flex;align-items:center;gap:4px"><span style="color:#10b981;font-size:1rem">●</span> 正評（4-5星）</span>
+      <span style="color:var(--border)">|</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="color:#f59e0b;font-size:1rem">●</span> 中性（3星）</span>
+      <span style="color:var(--border)">|</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="color:#ef4444;font-size:1rem">●</span> 負評（1-2星）</span>
+    </div>
+    <div class="hdr-badge"><div class="live-dot"></div>LIVE 真實評論</div>
+  </div>
 </div>
 
 <div class="layout">
@@ -741,7 +750,11 @@ function renderOverview(el) {
         <div class="rt-row">
           <div><div class="rt-name" style="color:${r.color}" onclick="showView('region','${r.id}')">${r.name}</div><div style="font-size:.68rem;color:var(--muted)">${r.manager} 區</div></div>
           <div><div class="rt-bar"><div class="bar-pos" style="width:${a.pos}%"></div><div class="bar-neu" style="width:${a.neu}%"></div><div class="bar-neg" style="width:${a.neg}%"></div></div>
-          <div style="font-size:.62rem;color:var(--muted);margin-top:3px">🟢${a.pos}% 🟡${a.neu}% 🔴${a.neg}%</div></div>
+          <div style="font-size:.62rem;color:var(--muted);margin-top:3px">
+            <span style="color:var(--green)">●正評 ${a.pos}%</span>
+            <span style="color:var(--accent);margin:0 4px">●中性 ${a.neu}%</span>
+            <span style="color:var(--red)">●負評 ${a.neg}%</span>
+          </div></div>
           <div class="rt-rating" style="color:${r.color}">${a.avg.toFixed(1)} ⭐</div>
           <div class="rt-stores">${r.stores.length}</div>
         </div>`}).join('')}
@@ -889,7 +902,11 @@ function renderConclusion(el) {
         <div class="rt-row">
           <div><div class="rt-name" style="color:${r.color}" onclick="showView('region','${r.id}')">${r.name}</div><div style="font-size:.68rem;color:var(--muted)">${r.manager} 區</div></div>
           <div><div class="rt-bar"><div class="bar-pos" style="width:${a.pos}%"></div><div class="bar-neu" style="width:${a.neu}%"></div><div class="bar-neg" style="width:${a.neg}%"></div></div>
-          <div style="font-size:.62rem;color:var(--muted);margin-top:3px">🟢${a.pos}% 🟡${a.neu}% 🔴${a.neg}%</div></div>
+          <div style="font-size:.62rem;color:var(--muted);margin-top:3px">
+            <span style="color:var(--green)">●正評 ${a.pos}%</span>
+            <span style="color:var(--accent);margin:0 4px">●中性 ${a.neu}%</span>
+            <span style="color:var(--red)">●負評 ${a.neg}%</span>
+          </div></div>
           <div class="rt-rating" style="color:${r.color}">${a.avg.toFixed(2)} ⭐</div>
           <div class="rt-stores">${r.stores.length}</div>
         </div>`}).join('')}
