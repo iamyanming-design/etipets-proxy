@@ -200,7 +200,7 @@ input.fi{flex:1;min-width:200px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 const PROXY_URL = 'https://etipets-proxy.onrender.com';
-const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+// AI分析已改為本地自動分析（免費版）
 
 // ══════════════════════════════════════════════
 // 真實資料 (來源: 東森寵物全台門店GM統計-5_13資料更新.xlsx)
@@ -396,49 +396,66 @@ async function fetchRealReviews(storeName, regionName) {
 }
 
 // ── AI 分析真實評論 ──
-async function analyzeReviews(storeName, regionName, realReviews) {
-  const reviewsText = realReviews.slice(0, 15).map((r, i) => 
-    `[${i+1}] ${r.user?.name || '匿名'} (${r.rating}星) ${r.date || ''}: ${r.snippet || r.text || '(無文字評論)'}`
-  ).join('\n');
+// 本地自動情感分析（免費，不需要 AI API）
+function analyzeReviewsLocal(realReviews) {
+  // 關鍵字庫
+  const posWords = ['棒','好','讚','優','喜歡','推薦','滿意','親切','專業','乾淨','整潔','用心','貼心','溫柔','耐心','細心','開心','快樂','舒適','方便','齊全','豐富','新鮮','健康','活潑'];
+  const negWords = ['差','爛','糟','貴','慢','髒','臭','吵','擠','小','少','舊','壞','死','病','臭','爛','失望','不好','不滿','抱怨','投訴','問題','改善','很差','不推'];
+  const proMap = {5:'服務優質親切', 4:'整體表現良好', 3:'環境尚可整潔', 2:'服務態度待改善', 1:'整體品質需提升'};
+  const conMap = {5:null, 4:'偶有小缺點', 3:'服務效率待提升', 2:'商品品質不穩定', 1:'服務態度差'};
+  const tipMap = {5:null, 4:'持續維持水準', 3:'加強服務速度', 2:'培訓服務人員', 1:'全面改善服務流程'};
 
-  const prompt = `你是東森寵物門市評論分析專家。以下是「${storeName}」（${regionName}）在 Google Maps 上的【真實評論】：
-
-${reviewsText}
-
-請針對以上真實評論，為每則評論提供分析，並回傳 JSON 格式：
-{
-  "reviews": [
-    {
-      "index": 1,
-      "sentiment": "positive|neutral|negative",
-      "pros": "優點（15字內，正評才填）",
-      "cons": "缺點（15字內，負評或中評才填）",
-      "tip": "改善建議（15字內，有缺點才填）"
-    }
-  ],
-  "summary": {
-    "top_pros": ["整體優點1","整體優點2","整體優點3"],
-    "top_cons": ["整體缺點1","整體缺點2"],
-    "top_tips": ["改善建議1","改善建議2"],
-    "conclusion": "本店50字內整體結論"
-  }
-}
-只回傳 JSON，不要其他文字。`;
-
-  // 透過 Proxy 伺服器呼叫 Claude AI（避免 CORS 問題）
-  const resp = await fetch(`${PROXY_URL}/analyze`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      storeName,
-      messages: [{ role: 'user', content: prompt }]
-    })
+  const analyzed = realReviews.slice(0,15).map((r,i) => {
+    const stars = r.rating || 5;
+    const text = (r.snippet || r.text || '').toLowerCase();
+    let sentiment = stars >= 4 ? 'positive' : stars >= 3 ? 'neutral' : 'negative';
+    // 關鍵字微調
+    const negCount = negWords.filter(w => text.includes(w)).length;
+    const posCount = posWords.filter(w => text.includes(w)).length;
+    if (negCount > posCount + 1 && sentiment === 'positive') sentiment = 'neutral';
+    if (posCount > negCount + 2 && sentiment === 'negative') sentiment = 'neutral';
+    return { index: i+1, sentiment, pros: proMap[stars], cons: conMap[stars], tip: tipMap[stars] };
   });
-  if (!resp.ok) throw new Error('AI分析請求失敗: HTTP ' + resp.status);
-  const d = await resp.json();
-  if (d.error) throw new Error('AI分析錯誤: ' + d.error);
-  const raw = d.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
-  return JSON.parse(raw);
+
+  // 統計摘要
+  const pos = analyzed.filter(r=>r.sentiment==='positive');
+  const neg = analyzed.filter(r=>r.sentiment==='negative');
+  const avgStars = realReviews.slice(0,15).reduce((a,r)=>a+(r.rating||5),0)/Math.min(realReviews.length,15);
+
+  // 從評論文字提取關鍵主題
+  const allText = realReviews.slice(0,15).map(r=>r.snippet||r.text||'').join(' ');
+  const themes = [
+    {k:'店員|員工|服務人員', label:'店員服務親切'},
+    {k:'美容|洗澡|剪毛', label:'美容技術優良'},
+    {k:'商品|飼料|用品', label:'商品選擇豐富'},
+    {k:'環境|乾淨|整潔', label:'環境整潔舒適'},
+    {k:'住宿|寄宿|托育', label:'住宿服務貼心'},
+    {k:'價格|便宜|合理', label:'價格合理'},
+  ].filter(t => new RegExp(t.k).test(allText)).map(t=>t.label);
+
+  const negThemes = [
+    {k:'等|慢|久', label:'等候時間較長'},
+    {k:'貴|價格高', label:'價格偏高'},
+    {k:'停車|車位', label:'停車不便'},
+    {k:'態度|冷漠|差', label:'服務態度待改善'},
+  ].filter(t => new RegExp(t.k).test(allText)).map(t=>t.label);
+
+  const posRate = Math.round(pos.length/analyzed.length*100);
+  const conclusion = avgStars >= 4.7
+    ? `本店整體表現優異，顧客滿意度高達${posRate}%，是區域標竿門市，建議持續維持並分享成功經驗。`
+    : avgStars >= 4.3
+    ? `本店表現穩定，正評率${posRate}%，顧客整體滿意。建議針對負評進行改善，提升整體評分。`
+    : `本店有改善空間，正評率${posRate}%，建議區域負責人進行實地稽核，聚焦服務品質提升。`;
+
+  return {
+    reviews: analyzed,
+    summary: {
+      top_pros: themes.length > 0 ? themes.slice(0,3) : ['服務人員親切', '環境整潔', '商品齊全'],
+      top_cons: negThemes.length > 0 ? negThemes.slice(0,2) : neg.length > 0 ? ['部分顧客反映有改善空間'] : ['暫無明顯缺點'],
+      top_tips: negThemes.length > 0 ? ['加強員工培訓', '優化服務流程'] : ['持續維持現有水準', '鼓勵顧客留下評論'],
+      conclusion
+    }
+  };
 }
 
 // ── 開啟 Modal ──
@@ -480,9 +497,10 @@ async function openModal(storeName, regionName, manager, url, rating, count) {
     setStep(2, 'Step 2：已取得 ' + rawReviews.length + ' 則真實評論...');
     await new Promise(r=>setTimeout(r,300));
 
-    // Step 3: AI 分析
-    setStep(3, 'Step 3：AI 正在分析評論內容...');
-    const analysis = await analyzeReviews(storeName, regionName, rawReviews);
+    // Step 3: 本地自動分析（免費）
+    setStep(3, 'Step 3：正在分析評論內容...');
+    await new Promise(r=>setTimeout(r,300)); // 短暫等待讓 UI 更新
+    const analysis = analyzeReviewsLocal(rawReviews);
     
     document.getElementById('prog').style.width = '100%';
     await new Promise(r=>setTimeout(r,300));
@@ -522,7 +540,7 @@ function renderRealReviews(storeName, regionName, url, rating, count, rawReviews
     `${regionName} · ⭐${rating} · 已抓取 ${enriched.length} 則真實評論 · 🟢${pos} 🟡${neu} 🔴${neg}`;
 
   document.getElementById('mBody').innerHTML = `
-    <div class="source-badge">✅ 真實 Google Maps 評論 · SerpApi 即時抓取 · ${new Date().toLocaleDateString('zh-TW')}</div>
+    <div class="source-badge">✅ 真實 Google Maps 評論 · 即時抓取分析 · ${new Date().toLocaleDateString('zh-TW')}</div>
 
     <div class="mtabs">
       <div class="mtab active" onclick="swTab(this,'ta')">全部(${enriched.length})</div>
