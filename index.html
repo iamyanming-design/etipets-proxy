@@ -348,36 +348,41 @@ function regionAvg(r) {
 
 // ── CORE: 用 SerpApi 抓取真實 Google Maps 評論 ──
 async function fetchRealReviews(storeName, regionName) {
+  const fetchOpts = { method: 'GET', mode: 'cors', cache: 'no-cache' };
+
   // Step 1: 透過 Proxy 搜尋店名取得 data_id
   const searchUrl = `${PROXY_URL}/search?engine=google_maps&q=${encodeURIComponent('東森寵物 ' + storeName)}&hl=zh-tw&gl=tw`;
   
   let dataId = null;
+  let d1;
   try {
-    const r1 = await fetch(searchUrl);
-    if (!r1.ok) throw new Error('Proxy HTTP ' + r1.status);
-    const d1 = await r1.json();
+    const r1 = await fetch(searchUrl, fetchOpts);
+    if (!r1.ok) throw new Error('HTTP ' + r1.status);
+    d1 = await r1.json();
     if (d1.error) throw new Error(d1.error);
+    // 處理 local_results（多筆結果）
     if (d1.local_results && d1.local_results.length > 0) {
-      const match = d1.local_results.find(r => r.title && r.title.includes(storeName.replace('店','').replace('館','')))
-                 || d1.local_results[0];
-      dataId = match.data_id;
-    } else if (d1.place_results) {
+      const matched = d1.local_results.find(r => r.title && r.title.includes(storeName.replace(/[店館院]/g,'')))
+                   || d1.local_results[0];
+      dataId = matched.data_id;
+    }
+    // 處理 place_results（單一結果）
+    else if (d1.place_results && d1.place_results.data_id) {
       dataId = d1.place_results.data_id;
     }
   } catch(e) {
-    throw new Error('搜尋門市失敗: ' + e.message);
+    throw new Error('搜尋失敗: ' + e.message);
   }
 
-  if (!dataId) throw new Error('找不到此門市的 Google Maps 資料，請稍後再試');
+  if (!dataId) throw new Error('找不到門市資料，請確認門市名稱');
 
   // Step 2: 透過 Proxy 用 data_id 抓取真實評論
   const reviewUrl = `${PROXY_URL}/search?engine=google_maps_reviews&data_id=${encodeURIComponent(dataId)}&hl=zh-tw&sort_by=newestFirst`;
   
-  let reviews = [];
-  let placeInfo = null;
+  let reviews = [], placeInfo = null;
   try {
-    const r2 = await fetch(reviewUrl);
-    if (!r2.ok) throw new Error('Proxy HTTP ' + r2.status);
+    const r2 = await fetch(reviewUrl, fetchOpts);
+    if (!r2.ok) throw new Error('HTTP ' + r2.status);
     const d2 = await r2.json();
     if (d2.error) throw new Error(d2.error);
     reviews = d2.reviews || [];
@@ -386,6 +391,7 @@ async function fetchRealReviews(storeName, regionName) {
     throw new Error('抓取評論失敗: ' + e.message);
   }
 
+  if (reviews.length === 0) throw new Error('此門市目前無評論資料');
   return { reviews, placeInfo, dataId };
 }
 
