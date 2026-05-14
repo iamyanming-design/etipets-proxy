@@ -5,22 +5,45 @@ const fs = require('fs');
 const path = require('path');
 
 const SERPAPI_KEY = '0367a1c487731b84caed917ab4476a7491c289e776bda861e6e23f64c2b9232d';
+const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
 const PORT = process.env.PORT || 3000;
 
-const server = http.createServer((req, res) => {
-  // CORS headers
+function setCORS(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+}
 
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204);
-    res.end();
-    return;
-  }
+function httpsPost(hostname, path, headers, body) {
+  return new Promise((resolve, reject) => {
+    const data = JSON.stringify(body);
+    const req = https.request({ hostname, path, method: 'POST', headers: { ...headers, 'Content-Length': Buffer.byteLength(data) } }, (res) => {
+      let raw = '';
+      res.on('data', c => raw += c);
+      res.on('end', () => resolve({ status: res.statusCode, body: raw }));
+    });
+    req.on('error', reject);
+    req.write(data);
+    req.end();
+  });
+}
 
-  const parsedUrl = url.parse(req.url, true);
-  const pathname = parsedUrl.pathname;
+function httpsGet(urlStr) {
+  return new Promise((resolve, reject) => {
+    https.get(urlStr, (res) => {
+      let raw = '';
+      res.on('data', c => raw += c);
+      res.on('end', () => resolve({ status: res.statusCode, body: raw }));
+    }).on('error', reject);
+  });
+}
+
+const server = http.createServer(async (req, res) => {
+  setCORS(res);
+  if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+
+  const parsed = url.parse(req.url, true);
+  const pathname = parsed.pathname;
 
   // ── /health ──
   if (pathname === '/health') {
@@ -29,38 +52,49 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // ── /search → proxy to SerpApi ──
+  // ── /search → SerpApi proxy ──
   if (pathname === '/search') {
-    const params = { ...parsedUrl.query, api_key: SERPAPI_KEY };
-    const queryStr = Object.entries(params)
-      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
-      .join('&');
-    const serpUrl = `https://serpapi.com/search.json?${queryStr}`;
-    console.log(`[PROXY] engine=${params.engine} q=${params.q || params.data_id || ''}`);
-
-    https.get(serpUrl, (serpRes) => {
-      let data = '';
-      serpRes.on('data', chunk => data += chunk);
-      serpRes.on('end', () => {
-        res.writeHead(serpRes.statusCode, { 'Content-Type': 'application/json' });
-        res.end(data);
-      });
-    }).on('error', (err) => {
+    const params = { ...parsed.query, api_key: SERPAPI_KEY };
+    const qs = Object.entries(params).map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+    console.log(`[SERP] ${params.engine} ${params.q || params.data_id || ''}`);
+    try {
+      const r = await httpsGet(`https://serpapi.com/search.json?${qs}`);
+      res.writeHead(r.status, { 'Content-Type': 'application/json' });
+      res.end(r.body);
+    } catch(e) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: err.message }));
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  // ── /analyze → Anthropic Claude proxy ──
+  if (pathname === '/analyze' && req.method === 'POST') {
+    let body = '';
+    req.on('data', c => body += c);
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body);
+        console.log(`[AI] Analyzing ${payload.storeName}`);
+        const r = await httpsPost('api.anthropic.com', '/v1/messages',
+          { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
+          { model: 'claude-sonnet-4-20250514', max_tokens: 2000, messages: payload.messages }
+        );
+        res.writeHead(r.status, { 'Content-Type': 'application/json' });
+        res.end(r.body);
+      } catch(e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
     });
     return;
   }
 
-  // ── / → 提供前端 HTML ──
+  // ── / → index.html ──
   if (pathname === '/' || pathname === '/index.html') {
     const filePath = path.join(__dirname, 'index.html');
     fs.readFile(filePath, (err, data) => {
-      if (err) {
-        res.writeHead(404);
-        res.end('Not found');
-        return;
-      }
+      if (err) { res.writeHead(404); res.end('Not found'); return; }
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(data);
     });
@@ -72,7 +106,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`✅ ETi Pets 全端系統啟動於 port ${PORT}`);
-  console.log(`   前端介面: http://localhost:${PORT}/`);
-  console.log(`   API Proxy: http://localhost:${PORT}/search`);
+  console.log(`✅ ETi Pets Server on port ${PORT}`);
 });

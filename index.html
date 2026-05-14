@@ -401,15 +401,7 @@ async function analyzeReviews(storeName, regionName, realReviews) {
     `[${i+1}] ${r.user?.name || '匿名'} (${r.rating}星) ${r.date || ''}: ${r.snippet || r.text || '(無文字評論)'}`
   ).join('\n');
 
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: CLAUDE_MODEL,
-      max_tokens: 2000,
-      messages: [{
-        role: 'user',
-        content: `你是東森寵物門市評論分析專家。以下是「${storeName}」（${regionName}）在 Google Maps 上的【真實評論】：
+  const prompt = `你是東森寵物門市評論分析專家。以下是「${storeName}」（${regionName}）在 Google Maps 上的【真實評論】：
 
 ${reviewsText}
 
@@ -431,11 +423,20 @@ ${reviewsText}
     "conclusion": "本店50字內整體結論"
   }
 }
-只回傳 JSON，不要其他文字。`
-      }]
+只回傳 JSON，不要其他文字。`;
+
+  // 透過 Proxy 伺服器呼叫 Claude AI（避免 CORS 問題）
+  const resp = await fetch(`${PROXY_URL}/analyze`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      storeName,
+      messages: [{ role: 'user', content: prompt }]
     })
   });
+  if (!resp.ok) throw new Error('AI分析請求失敗: HTTP ' + resp.status);
   const d = await resp.json();
+  if (d.error) throw new Error('AI分析錯誤: ' + d.error);
   const raw = d.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
   return JSON.parse(raw);
 }
