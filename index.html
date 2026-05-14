@@ -298,7 +298,7 @@ input.fi{flex:1;min-width:180px}
     <div class="hdr-icon">🐾</div>
     <div class="hdr-title">
       <h1>東森寵物 Google 評論真實分析系統</h1>
-      <p>即時抓取 Google Maps 真實評論 · AI 智能分析 · 9區 108店 · 5/13更新</p>
+      <p>即時抓取 Google Maps 真實評論 · 9區 108店 · <span id="updateDate">載入中...</span></p>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:12px">
@@ -333,6 +333,8 @@ input.fi{flex:1;min-width:180px}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
+//<![CDATA[
+
 const PROXY_URL = 'https://etipets-proxy.onrender.com';
 // AI分析已改為本地自動分析（免費版）
 
@@ -485,7 +487,7 @@ async function fetchRealReviews(storeName, regionName) {
   const fetchOpts = { method: 'GET', mode: 'cors', cache: 'no-cache' };
 
   // Step 1: 透過 Proxy 搜尋店名取得 data_id
-  const searchUrl = `${PROXY_URL}/search?engine=google_maps&q=${encodeURIComponent('東森寵物 ' + storeName)}&hl=zh-tw&gl=tw`;
+  const searchUrl = PROXY_URL + '/search?engine=google_maps&q=' + encodeURIComponent('東森寵物 ' + storeName) + '&hl=zh-tw&gl=tw';
   
   let dataId = null;
   let d1;
@@ -511,7 +513,7 @@ async function fetchRealReviews(storeName, regionName) {
   if (!dataId) throw new Error('找不到門市資料，請確認門市名稱');
 
   // Step 2: 透過 Proxy 用 data_id 抓取真實評論
-  const reviewUrl = `${PROXY_URL}/search?engine=google_maps_reviews&data_id=${encodeURIComponent(dataId)}&hl=zh-tw&sort_by=newestFirst`;
+  const reviewUrl = PROXY_URL + '/search?engine=google_maps_reviews&data_id=' + encodeURIComponent(dataId) + '&hl=zh-tw&sort_by=newestFirst';
   
   let reviews = [], placeInfo = null;
   try {
@@ -576,11 +578,7 @@ function analyzeReviewsLocal(realReviews) {
   ].filter(t => new RegExp(t.k).test(allText)).map(t=>t.label);
 
   const posRate = Math.round(pos.length/analyzed.length*100);
-  const conclusion = avgStars >= 4.7
-    ? `本店整體表現優異，顧客滿意度高達${posRate}%，是區域標竿門市，建議持續維持並分享成功經驗。`
-    : avgStars >= 4.3
-    ? `本店表現穩定，正評率${posRate}%，顧客整體滿意。建議針對負評進行改善，提升整體評分。`
-    : `本店有改善空間，正評率${posRate}%，建議區域負責人進行實地稽核，聚焦服務品質提升。`;
+  const conclusion = avgStars >= 4.7 ? '本店整體表現優異，顧客滿意度高達' + posRate + '%，是區域標竿門市，建議持續維持並分享成功經驗。' : avgStars >= 4.3 ? '本店表現穩定，正評率' + posRate + '%，顧客整體滿意。建議針對負評進行改善，提升整體評分。' : '本店有改善空間，正評率' + posRate + '%，建議區域負責人進行實地稽核，聚焦服務品質提升。';
 
   return {
     reviews: analyzed,
@@ -595,8 +593,8 @@ function analyzeReviewsLocal(realReviews) {
 
 // ── 開啟 Modal ──
 async function openModal(storeName, regionName, manager, url, rating, count) {
-  document.getElementById('mTitle').textContent = `${storeName} — 真實評論分析`;
-  document.getElementById('mSub').textContent = `${regionName} · ${manager}區 · ⭐${rating} · ${count.toLocaleString()}則評論`;
+  document.getElementById('mTitle').textContent = storeName + ' — 真實評論分析';
+  document.getElementById('mSub').textContent = regionName + ' · ' + manager + '區 · ⭐' + rating + ' · ' + count.toLocaleString() + '則評論';
   document.getElementById('mBody').innerHTML = `
     <div class="loading">
       <div class="spinner"></div>
@@ -672,7 +670,7 @@ function renderRealReviews(storeName, regionName, url, rating, count, rawReviews
   const sum = analysis?.summary || {};
 
   document.getElementById('mSub').textContent = 
-    `${regionName} · ⭐${rating} · 已抓取 ${enriched.length} 則真實評論 · 🟢${pos} 🟡${neu} 🔴${neg}`;
+    regionName + ' · ⭐' + rating + ' · 已抓取 ' + enriched.length + ' 則真實評論 · 🟢' + pos + ' 🟡' + neu + ' 🔴' + neg;
 
   document.getElementById('mBody').innerHTML = `
     <div class="source-badge">✅ 真實 Google Maps 評論 · 即時抓取分析 · ${new Date().toLocaleDateString('zh-TW')}</div>
@@ -819,10 +817,37 @@ function showView(view, rid) {
   else if(view==='region') renderRegion(c, rid);
 }
 
+async function updateCardRating(storeName, cardEl) {
+  const allStores = REGIONS.flatMap(r=>r.stores);
+  const store = allStores.find(s=>s.name===storeName);
+  if (!store) return;
+  const live = await fetchLiveRating(store);
+  if (!live) return;
+  const ratingEl = cardEl.querySelector('.sc-num');
+  const countEl = cardEl.querySelector('.sc-cnt');
+  if (ratingEl && live.rating) {
+    ratingEl.textContent = parseFloat(live.rating).toFixed(1);
+    ratingEl.style.color = live.rating >= 4.5 ? '#065f46' : live.rating >= 4.0 ? '#92400e' : '#991b1b';
+  }
+  if (countEl && live.reviews) {
+    countEl.innerHTML = parseInt(live.reviews).toLocaleString() + ' 則評論 <span style="color:#059669;font-size:.6rem">● 即時</span>';
+  }
+  // 更新情感條
+  const s = calcSentiment(live.rating);
+  const bar = cardEl.querySelector('.sent-bar');
+  if (bar) bar.innerHTML = '<div class="bar-pos" style="width:' + s.pos + '%"></div>' +
+    '<div class="bar-neu" style="width:' + s.neu + '%"></div>' +
+    '<div class="bar-neg" style="width:' + s.neg + '%"></div>';
+  const legend = cardEl.querySelector('.sent-legend');
+  if (legend) legend.innerHTML = '<span class="sl-pos">🟢 正評 ' + s.pos + '%</span>' +
+    '<span class="sl-neu">🟡 中性 ' + s.neu + '%</span>' +
+    '<span class="sl-neg">🔴 負評 ' + s.neg + '%</span>';
+}
+
 function storeCard(s, r) {
   const st = calcSentiment(s.rating);
   return `
-  <div class="sc" onclick="openModal('${s.name.replace(/'/g,"\\'")}','${r.name}','${r.manager}','${s.url}',${s.rating},${s.count})">
+  <div class="sc" data-store="${s.name.replace(/'/g,\"\\'\"")}" onclick="openModal('${s.name.replace(/'/g,"\\'")}','${r.name}','${r.manager}','${s.url}',${s.rating},${s.count})">
     <div class="sc-head">
       <div>
         <div style="font-size:.62rem;padding:2px 7px;border-radius:4px;margin-bottom:5px;display:inline-block;background:${r.color}22;color:${r.color};border:1px solid ${r.color}44">${r.name} · ${r.manager}</div>
@@ -859,7 +884,7 @@ function renderOverview(el) {
   const totalC = allS.reduce((a,s)=>a+s.count,0);
   const top = [...allS].sort((a,b)=>b.rating-a.rating)[0];
   el.innerHTML = `
-    <div class="sec-title">📊 全台統計總覽 <span style="font-size:.72rem;color:var(--muted);font-weight:400">資料更新：2025/05/13</span></div>
+    <div class="sec-title">📊 全台統計總覽 <span style="font-size:.72rem;color:var(--muted);font-weight:400">資料更新：<span id="overviewDate">載入中</span></span></div>
     <div class="stats">
       <div class="stat gold"><div class="stat-lbl">全台門市數</div><div class="stat-val">${allS.length}</div><div class="stat-sub">9 大區域</div></div>
       <div class="stat grn"><div class="stat-lbl">全台平均評分</div><div class="stat-val">${avgR}</div><div class="stat-sub">Google 5星平均</div></div>
@@ -1048,6 +1073,18 @@ function renderConclusion(el) {
 
 buildSidebar();
 showView('overview');
+// 動態更新日期為今天
+(function() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth()+1).padStart(2,'0');
+  const d = String(now.getDate()).padStart(2,'0');
+  const dateStr = y + '/' + m + '/' + d;
+  const el = document.getElementById('updateDate');
+  if (el) el.textContent = dateStr + ' 更新';
+  const el2 = document.getElementById('overviewDate');
+  if (el2) el2.textContent = dateStr;
+})();
+
+//]]>
 </script>
-</body>
-</html>
