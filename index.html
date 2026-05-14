@@ -414,7 +414,7 @@ function storeCard(s,r){
     +'<div class="sc-head">'
     +'<div><div class="sc-tag" style="background:'+r.color+'22;color:'+r.color+';border:1px solid '+r.color+'44">'+r.name+' · '+r.manager+'</div>'
     +'<div class="sc-name">'+s.name+'</div></div>'
-    +'<div class="sc-r"><div style="font-size:.75rem;color:'+ratingColor+'">★★★★★</div>'
+    +'<div style="font-size:.78rem;color:#f59e0b;letter-spacing:1px">'+renderStars(s.rating)+'</div>'
     +'<div class="sc-num" style="color:'+ratingColor+'">'+s.rating.toFixed(1)+'</div>'
     +'<div class="sc-cnt">'+s.count.toLocaleString()+' 則評論</div></div>'
     +'</div>'
