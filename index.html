@@ -329,9 +329,18 @@ var REGIONS = [
 ];
 
 function calcSent(r){
-  var pos=Math.min(97,Math.round((r-1)/4*100+(r>=4.5?8:0)));
-  var neg=Math.max(1,Math.round((5-r)*7));
-  return{pos:pos,neu:Math.max(1,100-pos-neg),neg:neg};
+  // 依評分精確計算情感比例
+  var pos,neu,neg;
+  if(r>=4.8){pos=Math.round(85+(r-4.8)*50);neg=Math.round((5-r)*5);neu=100-pos-neg;}
+  else if(r>=4.5){pos=Math.round(70+(r-4.5)*50);neg=Math.round((5-r)*8);neu=100-pos-neg;}
+  else if(r>=4.0){pos=Math.round(40+(r-4.0)*60);neg=Math.round((5-r)*10);neu=100-pos-neg;}
+  else if(r>=3.0){pos=Math.round((r-3.0)*40);neg=Math.round(20+(4.0-r)*20);neu=100-pos-neg;}
+  else if(r>=2.0){pos=0;neg=Math.round(60+(3.0-r)*30);neu=100-neg;}
+  else{pos=0;neg=95;neu=5;}
+  pos=Math.max(0,Math.min(100,pos));
+  neg=Math.max(0,Math.min(100,neg));
+  neu=Math.max(0,100-pos-neg);
+  return{pos:pos,neu:neu,neg:neg};
 }
 function rAvg(region){
   var avg=region.stores.reduce(function(a,s){return a+s.rating;},0)/region.stores.length;
