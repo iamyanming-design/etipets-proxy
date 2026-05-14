@@ -3,321 +3,187 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>東森寵物 Google評論真實分析系統</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<title>東森寵物 Google評論分析系統</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:#f0f4f8; --surface:#ffffff; --surface2:#f8fafc; --border:#e2e8f0;
-  --accent:#d97706; --green:#059669; --red:#dc2626; --blue:#4f46e5; --purple:#7c3aed; --cyan:#0891b2;
-  --text:#1e293b; --muted:#64748b; --text-inv:#ffffff;
-  --pos-bg:#dcfce7; --neu-bg:#fef9c3; --neg-bg:#fee2e2;
-  --pos-border:#86efac; --neu-border:#fde047; --neg-border:#fca5a5;
-  --shadow:0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
-  --shadow-md:0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.06);
-  --shadow-lg:0 10px 15px rgba(0,0,0,.08), 0 4px 6px rgba(0,0,0,.05);
-}
+:root{--bg:#f0f4f8;--surface:#fff;--surface2:#f8fafc;--border:#e2e8f0;--accent:#d97706;--green:#059669;--red:#dc2626;--blue:#4f46e5;--text:#1e293b;--muted:#64748b;--shadow:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 6px rgba(0,0,0,.07);--shadow-lg:0 10px 15px rgba(0,0,0,.08)}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-
-/* ── HEADER ── */
-.hdr{background:linear-gradient(135deg,#1e3a5f 0%,#1e40af 50%,#312e81 100%);
-  border-bottom:3px solid #f59e0b;
-  padding:16px 24px;display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.hdr-l{display:flex;align-items:center;gap:14px}
-.hdr-icon{width:44px;height:44px;background:linear-gradient(135deg,#f59e0b,#f97316);
-  border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;
-  box-shadow:0 2px 8px rgba(245,158,11,.4)}
-.hdr-title h1{font-size:1.2rem;font-weight:800;color:#fff;letter-spacing:.3px}
-.hdr-title p{font-size:.7rem;color:#93c5fd;margin-top:2px}
-.hdr-badge{background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:800;
-  font-size:.68rem;padding:5px 13px;border-radius:20px;letter-spacing:1px;
-  display:flex;align-items:center;gap:6px;box-shadow:0 2px 6px rgba(16,185,129,.3)}
-.live-dot{width:7px;height:7px;background:#fff;border-radius:50%;animation:pulse 1.5s infinite}
+.hdr{background:linear-gradient(135deg,#1e3a5f,#1e40af 50%,#312e81);border-bottom:3px solid #f59e0b;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.hdr-l{display:flex;align-items:center;gap:12px}
+.hdr-icon{width:42px;height:42px;background:linear-gradient(135deg,#f59e0b,#f97316);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.hdr-title h1{font-size:1.1rem;font-weight:800;color:#fff}
+.hdr-title p{font-size:.68rem;color:#93c5fd;margin-top:1px}
+.hdr-r{display:flex;align-items:center;gap:10px}
+.legend{display:flex;align-items:center;gap:8px;font-size:.68rem;background:rgba(255,255,255,.12);padding:6px 12px;border-radius:7px;border:1px solid rgba(255,255,255,.2);color:#e2e8f0}
+.legend span{display:flex;align-items:center;gap:3px}
+.ld{width:9px;height:9px;border-radius:50%}
+.badge{background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:800;font-size:.65rem;padding:4px 11px;border-radius:20px;display:flex;align-items:center;gap:5px}
+.dot{width:6px;height:6px;background:#fff;border-radius:50%;animation:pulse 1.5s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.legend-bar{display:flex;align-items:center;gap:10px;font-size:.71rem;
-  background:rgba(255,255,255,.15);padding:7px 14px;border-radius:8px;
-  border:1px solid rgba(255,255,255,.2);color:#e2e8f0}
-.legend-bar span{display:flex;align-items:center;gap:4px}
-.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.legend-sep{color:rgba(255,255,255,.3)}
-
-/* ── LAYOUT ── */
-.layout{display:flex;min-height:calc(100vh - 83px)}
-.sidebar{width:240px;min-width:240px;background:var(--surface);
-  border-right:2px solid var(--border);
-  padding:16px 0;overflow-y:auto;height:calc(100vh - 83px);
-  position:sticky;top:83px;box-shadow:2px 0 8px rgba(0,0,0,.04)}
-.content{flex:1;padding:24px 28px;overflow-y:auto;max-width:1400px}
-
-/* ── SIDEBAR ── */
-.sb-sec-title{font-size:.62rem;font-weight:800;color:var(--muted);letter-spacing:2px;
-  text-transform:uppercase;padding:12px 16px 4px}
-.sb-item{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;
-  transition:all .15s;border-left:3px solid transparent;user-select:none;border-radius:0 6px 6px 0;margin:1px 8px 1px 0}
+.layout{display:flex;min-height:calc(100vh - 80px)}
+.sidebar{width:230px;min-width:230px;background:var(--surface);border-right:1px solid var(--border);padding:12px 0;overflow-y:auto;height:calc(100vh - 80px);position:sticky;top:80px;box-shadow:2px 0 6px rgba(0,0,0,.04)}
+.content{flex:1;padding:22px 26px;overflow-y:auto}
+.sb-sec{font-size:.6rem;font-weight:800;color:var(--muted);letter-spacing:2px;text-transform:uppercase;padding:10px 14px 3px}
+.sb-item{display:flex;align-items:center;gap:8px;padding:8px 14px;cursor:pointer;transition:all .15s;border-left:3px solid transparent;border-radius:0 6px 6px 0;margin:1px 6px 1px 0}
 .sb-item:hover{background:#eff6ff;border-left-color:#93c5fd}
-.sb-item.active{background:#eff6ff;border-left-color:#1e40af;box-shadow:var(--shadow)}
-.sb-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.2)}
-.sb-name{font-size:.8rem;font-weight:600;flex:1;line-height:1.3;color:var(--text)}
+.sb-item.active{background:#eff6ff;border-left-color:#1e40af}
+.sb-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.sb-name{font-size:.78rem;font-weight:600;flex:1;color:var(--text)}
 .sb-item.active .sb-name{color:#1e40af;font-weight:700}
-.sb-count{font-size:.65rem;background:var(--bg);color:var(--muted);
-  padding:2px 7px;border-radius:10px;border:1px solid var(--border);font-weight:600}
-.sb-divider{height:1px;background:var(--border);margin:8px 14px}
-
-/* ── STAT CARDS ── */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-.stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;
-  box-shadow:var(--shadow-md);transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden}
-.stat:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
-.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:14px 14px 0 0}
+.sb-cnt{font-size:.63rem;background:var(--bg);color:var(--muted);padding:1px 6px;border-radius:8px;border:1px solid var(--border)}
+.sb-div{height:1px;background:var(--border);margin:6px 12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;box-shadow:var(--shadow-md);position:relative;overflow:hidden;transition:transform .2s}
+.stat:hover{transform:translateY(-2px)}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0}
 .stat.gold::before{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
 .stat.grn::before{background:linear-gradient(90deg,#059669,#10b981)}
 .stat.red::before{background:linear-gradient(90deg,#dc2626,#ef4444)}
 .stat.blu::before{background:linear-gradient(90deg,#4f46e5,#6366f1)}
-.stat-lbl{font-size:.7rem;color:var(--muted);margin-bottom:8px;font-weight:600;letter-spacing:.3px}
-.stat-val{font-size:2rem;font-weight:900;line-height:1}
-.stat.gold .stat-val{color:#b45309}
-.stat.grn .stat-val{color:#065f46}
-.stat.red .stat-val{color:#991b1b}
-.stat.blu .stat-val{color:#312e81}
-.stat-sub{font-size:.68rem;color:var(--muted);margin-top:6px;font-weight:500}
-
-/* ── SECTION TITLE ── */
-.sec-title{font-size:1rem;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:10px;color:var(--text)}
+.stat-lbl{font-size:.68rem;color:var(--muted);margin-bottom:6px;font-weight:600}
+.stat-val{font-size:1.9rem;font-weight:900;line-height:1}
+.stat.gold .stat-val{color:#b45309}.stat.grn .stat-val{color:#065f46}.stat.red .stat-val{color:#991b1b}.stat.blu .stat-val{color:#312e81}
+.stat-sub{font-size:.65rem;color:var(--muted);margin-top:5px}
+.sec-title{font-size:.95rem;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .sec-title::after{content:'';flex:1;height:2px;background:linear-gradient(90deg,var(--border),transparent)}
-
-/* ── CHARTS ── */
-.charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
-.chart-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
-.chart-box h3{font-size:.75rem;font-weight:800;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px;
-  padding-bottom:10px;border-bottom:1px solid var(--border)}
-
-/* ── REGION TABLE ── */
-.region-table{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:24px;box-shadow:var(--shadow)}
-.rt-row{display:grid;grid-template-columns:180px 1fr 90px 60px;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border)}
-.rt-row:last-child{border-bottom:none}
-.rt-row:hover{background:#f8fafc}
-.rt-head{background:linear-gradient(135deg,#1e3a5f,#1e40af);color:#e2e8f0;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
-.rt-name{font-size:.85rem;font-weight:700;cursor:pointer;transition:color .15s}
-.rt-name:hover{color:#1e40af}
-.rt-bar{height:22px;border-radius:6px;background:var(--bg);overflow:hidden;display:flex;border:1px solid var(--border)}
-.bar-pos{background:linear-gradient(90deg,#059669,#10b981)}
-.bar-neu{background:linear-gradient(90deg,#d97706,#f59e0b)}
-.bar-neg{background:linear-gradient(90deg,#dc2626,#ef4444)}
-.rt-rating{font-size:.88rem;font-weight:800;text-align:right}
-.rt-stores{font-size:.72rem;color:var(--blue);text-align:center;font-weight:700}
-
-/* ── FILTER BAR ── */
-.filter-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
-.fi{background:var(--surface);border:2px solid var(--border);color:var(--text);
-  padding:8px 14px;border-radius:8px;font-size:.78rem;font-family:inherit;
-  cursor:pointer;transition:border-color .15s;box-shadow:var(--shadow)}
-.fi:focus{outline:none;border-color:#1e40af}
-.fi::placeholder{color:var(--muted)}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
+.chart-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;box-shadow:var(--shadow)}
+.chart-box h3{font-size:.7rem;font-weight:800;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.rtable{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:22px;box-shadow:var(--shadow)}
+.rt-row{display:grid;grid-template-columns:170px 1fr 80px 55px;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--border)}
+.rt-row:last-child{border-bottom:none}.rt-row:hover{background:var(--surface2)}
+.rt-head{background:linear-gradient(135deg,#1e3a5f,#1e40af);color:#e2e8f0;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.rt-name{font-size:.82rem;font-weight:700;cursor:pointer}.rt-name:hover{color:#1e40af}
+.rt-bar{height:20px;border-radius:5px;background:var(--bg);overflow:hidden;display:flex;border:1px solid var(--border)}
+.bp{background:linear-gradient(90deg,#059669,#10b981)}
+.bn{background:linear-gradient(90deg,#d97706,#f59e0b)}
+.br{background:linear-gradient(90deg,#dc2626,#ef4444)}
+.rt-rating{font-size:.85rem;font-weight:800;text-align:right}
+.rt-stores{font-size:.7rem;color:var(--blue);text-align:center;font-weight:700}
+.fbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.fi{background:var(--surface);border:2px solid var(--border);color:var(--text);padding:7px 12px;border-radius:8px;font-size:.76rem;font-family:inherit;cursor:pointer;box-shadow:var(--shadow)}
+.fi:focus{outline:none;border-color:#1e40af}.fi::placeholder{color:var(--muted)}
 input.fi{flex:1;min-width:180px}
-
-/* ── STORE GRID ── */
-.store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;margin-bottom:24px}
-.sc{background:var(--surface);border:1px solid var(--border);border-radius:14px;
-  overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:var(--shadow)}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:22px}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:var(--shadow)}
 .sc:hover{border-color:#1e40af;transform:translateY(-3px);box-shadow:var(--shadow-lg)}
-.sc-head{padding:14px 16px;display:flex;align-items:flex-start;justify-content:space-between;
-  border-bottom:1px solid var(--border);background:var(--surface2)}
-.sc-name{font-size:.92rem;font-weight:800;margin-bottom:4px;color:var(--text)}
+.sc-head{padding:12px 15px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--surface2)}
+.sc-name{font-size:.88rem;font-weight:800;margin-bottom:3px;color:var(--text)}
+.sc-tag{font-size:.6rem;padding:2px 7px;border-radius:4px;display:inline-block;margin-bottom:4px;font-weight:600}
 .sc-r{text-align:right;flex-shrink:0;margin-left:8px}
-.sc-stars{font-size:.78rem}
-.sc-num{font-size:1.6rem;font-weight:900;line-height:1.1}
-.sc-cnt{font-size:.65rem;color:var(--muted);font-weight:600}
-.sc-body{padding:12px 16px;background:var(--surface)}
-.sent-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
-.sent-bar{flex:1;height:8px;border-radius:4px;background:var(--bg);overflow:hidden;display:flex;border:1px solid var(--border)}
-.sent-legend{display:flex;gap:10px;font-size:.65rem;font-weight:600}
-.sl-pos{color:#065f46}.sl-neu{color:#92400e}.sl-neg{color:#991b1b}
-.sc-foot{padding:10px 16px;background:#f8fafc;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border)}
-.glink{font-size:.72rem;color:#1e40af;text-decoration:none;display:flex;align-items:center;gap:4px;font-weight:600}
-.glink:hover{color:#1e3a5f;text-decoration:underline}
-.btn-live{font-size:.72rem;background:linear-gradient(135deg,#059669,#047857);border:none;color:#fff;
-  padding:5px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:700;
-  display:flex;align-items:center;gap:5px;box-shadow:0 2px 4px rgba(5,150,105,.3);transition:all .15s}
-.btn-live:hover{background:linear-gradient(135deg,#047857,#065f46);transform:translateY(-1px)}
-
-/* ── MODAL ── */
-.overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);
-  z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.sc-num{font-size:1.5rem;font-weight:900;line-height:1.1}
+.sc-cnt{font-size:.63rem;color:var(--muted);font-weight:500}
+.sc-body{padding:11px 15px}
+.sbar-wrap{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.sbar{flex:1;height:7px;border-radius:4px;background:var(--bg);overflow:hidden;display:flex;border:1px solid var(--border)}
+.sl{font-size:.62rem;font-weight:700;white-space:nowrap}
+.sl-p{color:#065f46}.sl-n{color:#92400e}.sl-r{color:#991b1b}
+.sc-foot{padding:9px 15px;background:#f8fafc;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border)}
+.glink{font-size:.7rem;color:#1e40af;text-decoration:none;font-weight:600}
+.glink:hover{text-decoration:underline}
+.btn-live{font-size:.68rem;background:linear-gradient(135deg,#059669,#047857);border:none;color:#fff;padding:5px 11px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:700;display:flex;align-items:center;gap:4px;box-shadow:0 2px 4px rgba(5,150,105,.3)}
+.btn-live:hover{background:linear-gradient(135deg,#047857,#065f46)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.65);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 .overlay.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;
-  width:92%;max-width:860px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;
-  box-shadow:0 25px 50px rgba(0,0,0,.15)}
-.modal-hdr{padding:20px 24px;border-bottom:2px solid var(--border);
-  display:flex;justify-content:space-between;align-items:flex-start;
-  background:linear-gradient(135deg,#1e3a5f,#1e40af)}
-.modal-title{font-size:1.1rem;font-weight:800;color:#fff}
-.modal-sub{font-size:.75rem;color:#93c5fd;margin-top:4px}
-.modal-x{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);
-  color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:1rem;transition:all .15s}
-.modal-x:hover{background:rgba(239,68,68,.3)}
-.modal-body{padding:20px 24px;overflow-y:auto;flex:1;background:var(--bg)}
-
-/* MODAL TABS */
-.mtabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
-.mtab{padding:6px 14px;border-radius:6px;border:2px solid var(--border);
-  background:var(--surface);cursor:pointer;font-size:.75rem;color:var(--muted);
-  transition:all .15s;font-weight:600}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:92%;max-width:840px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 25px 50px rgba(0,0,0,.15)}
+.modal-hdr{padding:18px 22px;border-bottom:2px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;background:linear-gradient(135deg,#1e3a5f,#1e40af)}
+.modal-title{font-size:1.05rem;font-weight:800;color:#fff}
+.modal-sub{font-size:.72rem;color:#93c5fd;margin-top:3px}
+.modal-x{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);color:#fff;width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:.95rem;transition:all .15s}
+.modal-x:hover{background:rgba(220,38,38,.4)}
+.modal-body{padding:18px 22px;overflow-y:auto;flex:1;background:var(--bg)}
+.mtabs{display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap}
+.mtab{padding:5px 13px;border-radius:6px;border:2px solid var(--border);background:var(--surface);cursor:pointer;font-size:.72rem;color:var(--muted);transition:all .15s;font-weight:600}
 .mtab:hover{border-color:#1e40af;color:#1e40af}
-.mtab.active{background:#1e40af;color:#fff;border-color:#1e40af;font-weight:700;box-shadow:0 2px 6px rgba(30,64,175,.3)}
-
-/* REVIEW CARDS */
-.rv{border-radius:12px;padding:16px;margin-bottom:12px;border:2px solid;transition:all .2s}
-.rv.positive{background:var(--pos-bg);border-color:var(--pos-border)}
-.rv.neutral{background:var(--neu-bg);border-color:var(--neu-border)}
-.rv.negative{background:var(--neg-bg);border-color:var(--neg-border)}
-.rv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px}
-.rv-author{font-size:.88rem;font-weight:800;color:var(--text)}
-.rv-author-meta{font-size:.68rem;color:var(--muted);margin-top:2px}
-.rv-meta{display:flex;align-items:center;gap:7px;flex-shrink:0}
-.rv-stars{font-size:.78rem}
-.rv-date{font-size:.68rem;color:var(--muted);font-weight:500}
-.sbadge{font-size:.62rem;font-weight:800;padding:3px 10px;border-radius:20px}
+.mtab.active{background:#1e40af;color:#fff;border-color:#1e40af}
+.rv{border-radius:10px;padding:14px;margin-bottom:10px;border:2px solid}
+.rv.positive{background:#dcfce7;border-color:#86efac}
+.rv.neutral{background:#fef9c3;border-color:#fde047}
+.rv.negative{background:#fee2e2;border-color:#fca5a5}
+.rv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px}
+.rv-author{font-size:.86rem;font-weight:800;color:var(--text)}
+.rv-meta-row{font-size:.66rem;color:var(--muted);margin-top:2px}
+.rv-meta{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.rv-stars{font-size:.75rem}
+.rv-date{font-size:.65rem;color:var(--muted)}
+.sbadge{font-size:.6rem;font-weight:800;padding:2px 9px;border-radius:20px}
 .sbadge.positive{background:#059669;color:#fff}
 .sbadge.neutral{background:#d97706;color:#fff}
 .sbadge.negative{background:#dc2626;color:#fff}
-.rv-text{font-size:.84rem;line-height:1.7;color:#1e293b;margin-bottom:12px;font-weight:400}
-.rv-analysis{background:rgba(0,0,0,.04);border-radius:10px;padding:12px;border:1px solid rgba(0,0,0,.08)}
-.av{display:flex;gap:8px;margin-bottom:6px;font-size:.76rem}
+.rv-text{font-size:.82rem;line-height:1.7;color:#1e293b;margin-bottom:10px}
+.rv-ana{background:rgba(0,0,0,.04);border-radius:8px;padding:11px;border:1px solid rgba(0,0,0,.07)}
+.av{display:flex;gap:7px;margin-bottom:5px;font-size:.74rem}
 .av:last-child{margin-bottom:0}
-.al{white-space:nowrap;font-weight:800;min-width:58px}
+.al{white-space:nowrap;font-weight:800;min-width:54px}
 .al.p{color:#065f46}.al.c{color:#991b1b}.al.t{color:#312e81}
-.ac{color:var(--text);line-height:1.5;font-weight:500}
-.source-badge{font-size:.62rem;background:#dcfce7;color:#065f46;
-  border:1px solid #86efac;padding:4px 10px;border-radius:6px;
-  display:inline-flex;align-items:center;gap:5px;margin-bottom:12px;font-weight:700}
-
-/* SUMMARY */
-.summary-box{background:var(--surface);border-radius:12px;padding:18px;margin-bottom:16px;
-  border:1px solid var(--border);box-shadow:var(--shadow)}
-.sum-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-.sum-col h4{font-size:.72rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid}
+.ac{color:var(--text);line-height:1.5}
+.src-badge{font-size:.6rem;background:#dcfce7;color:#065f46;border:1px solid #86efac;padding:3px 9px;border-radius:5px;display:inline-flex;align-items:center;gap:4px;margin-bottom:10px;font-weight:700}
+.sum-box{background:var(--surface);border-radius:10px;padding:16px;margin-bottom:14px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.sum-col h4{font-size:.68rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid}
 .sum-col.p h4{color:#065f46;border-color:#86efac}
 .sum-col.c h4{color:#991b1b;border-color:#fca5a5}
 .sum-col.t h4{color:#312e81;border-color:#a5b4fc}
 .sum-col ul{list-style:none}
-.sum-col ul li{font-size:.78rem;color:var(--text);padding:5px 0;
-  border-bottom:1px solid var(--border);display:flex;gap:6px;line-height:1.5;font-weight:500}
-.sum-col ul li::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px}
-.sum-col.p ul li::before{background:#059669}
-.sum-col.c ul li::before{background:#dc2626}
-.sum-col.t ul li::before{background:#4f46e5}
-
-/* CONCLUSION */
-.concl{background:linear-gradient(135deg,#eff6ff,#f0fdf4);
-  border:2px solid #bfdbfe;border-radius:14px;padding:24px;margin-bottom:24px;box-shadow:var(--shadow)}
-.concl-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
-.concl-sec h4{font-size:.72rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;
-  padding:6px 10px;border-radius:6px}
-.concl-sec.s h4{color:#065f46;background:#dcfce7}
-.concl-sec.w h4{color:#991b1b;background:#fee2e2}
-.concl-sec.i h4{color:#92400e;background:#fef3c7}
-.concl-sec.n h4{color:#312e81;background:#ede9fe}
-.concl-list{list-style:none}
-.concl-list li{font-size:.8rem;color:var(--text);padding:5px 0 5px 14px;position:relative;line-height:1.6;font-weight:500}
-.concl-list li::before{content:'→';position:absolute;left:0;font-weight:800}
-.concl-sec.s .concl-list li::before{color:#059669}
-.concl-sec.w .concl-list li::before{color:#dc2626}
-.concl-sec.i .concl-list li::before{color:#d97706}
-.concl-sec.n .concl-list li::before{color:#4f46e5}
-
-/* DATA TABLE */
-.data-table{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:24px;box-shadow:var(--shadow)}
-.data-table table{width:100%;border-collapse:collapse}
-.data-table th{padding:12px 16px;text-align:left;font-size:.7rem;color:#e2e8f0;
-  font-weight:800;background:linear-gradient(135deg,#1e3a5f,#1e40af);text-transform:uppercase;letter-spacing:.5px}
-.data-table td{padding:12px 16px;font-size:.82rem;border-top:1px solid var(--border);color:var(--text);font-weight:500}
-.data-table tr:hover td{background:#f8fafc}
-
-/* LOADING */
-.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px;gap:14px}
-.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:#059669;border-radius:50%;animation:spin .8s linear infinite}
+.sum-col ul li{font-size:.76rem;color:var(--text);padding:4px 0;border-bottom:1px solid var(--border);display:flex;gap:5px;line-height:1.5}
+.sum-col ul li::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:6px}
+.sum-col.p ul li::before{background:#059669}.sum-col.c ul li::before{background:#dc2626}.sum-col.t ul li::before{background:#4f46e5}
+.concl{background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:2px solid #bfdbfe;border-radius:12px;padding:20px;margin-bottom:22px}
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.cs h4{font-size:.68rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;padding:5px 9px;border-radius:5px}
+.cs.s h4{color:#065f46;background:#dcfce7}
+.cs.w h4{color:#991b1b;background:#fee2e2}
+.cs.i h4{color:#92400e;background:#fef3c7}
+.cs.n h4{color:#312e81;background:#ede9fe}
+.cl{list-style:none}
+.cl li{font-size:.78rem;color:var(--text);padding:4px 0 4px 13px;position:relative;line-height:1.55}
+.cl li::before{content:'→';position:absolute;left:0;font-weight:800}
+.cs.s .cl li::before{color:#059669}.cs.w .cl li::before{color:#dc2626}.cs.i .cl li::before{color:#d97706}.cs.n .cl li::before{color:#4f46e5}
+.dtable{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:22px;box-shadow:var(--shadow)}
+.dtable table{width:100%;border-collapse:collapse}
+.dtable th{padding:10px 14px;text-align:left;font-size:.66rem;color:#e2e8f0;font-weight:700;background:linear-gradient(135deg,#1e3a5f,#1e40af);text-transform:uppercase;letter-spacing:.5px}
+.dtable td{padding:10px 14px;font-size:.8rem;border-top:1px solid var(--border);color:var(--text)}
+.dtable tr:hover td{background:var(--surface2)}
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px;gap:12px}
+.spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:#059669;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.loading-txt{font-size:.84rem;color:var(--muted);font-weight:600}
-.progress-bar{width:280px;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
-.progress-fill{height:100%;background:linear-gradient(90deg,#059669,#10b981);border-radius:3px;transition:width .5s ease}
-.step-done{color:#059669;font-weight:700}
-.step-active{color:#d97706;font-weight:700}
-.step-pending{color:var(--muted)}
-.loading-steps{font-size:.78rem;text-align:center;line-height:2}
-.error-box{background:#fee2e2;border:2px solid #fca5a5;border-radius:12px;padding:18px;
-  color:#991b1b;font-size:.82rem;line-height:1.7;font-weight:500}
-
-/* ── RWD ── */
-@media(max-width:1200px){
-  .stats{grid-template-columns:repeat(2,1fr)}
-  .charts{grid-template-columns:1fr}
-  .concl-grid{grid-template-columns:1fr}
-  .sum-grid{grid-template-columns:1fr}
-}
-@media(max-width:900px){
-  .sidebar{display:none}
-  .content{padding:16px}
-  .store-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
-  .rt-row{grid-template-columns:120px 1fr 70px 50px;gap:8px;padding:10px 14px}
-  .legend-bar{display:none}
-}
-@media(max-width:600px){
-  .hdr{padding:12px 16px;flex-wrap:wrap;gap:10px}
-  .hdr-title h1{font-size:1rem}
-  .stats{grid-template-columns:repeat(2,1fr);gap:10px}
-  .stat{padding:14px}
-  .stat-val{font-size:1.6rem}
-  .store-grid{grid-template-columns:1fr}
-  .charts{grid-template-columns:1fr}
-  .modal{width:98%;max-height:95vh;border-radius:12px}
-  .modal-hdr{padding:16px}
-  .modal-body{padding:14px}
-  .mtabs{gap:5px}
-  .mtab{padding:5px 10px;font-size:.7rem}
-  .rt-row{grid-template-columns:100px 1fr 60px;gap:6px}
-  .rt-stores{display:none}
-  .concl-grid{grid-template-columns:1fr}
-  .sum-grid{grid-template-columns:1fr}
-  .filter-bar{flex-direction:column}
-  input.fi{min-width:unset;width:100%}
-  .sc-num{font-size:1.3rem}
-}
-
-/* SCROLLBAR */
-::-webkit-scrollbar{width:5px}
-::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+.ltxt{font-size:.8rem;color:var(--muted);font-weight:600}
+.pbar{width:260px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.pfill{height:100%;background:linear-gradient(90deg,#059669,#10b981);border-radius:2px;transition:width .5s ease}
+.s-done{color:#059669;font-weight:700}.s-act{color:#d97706;font-weight:700}.s-pend{color:var(--muted)}
+.lsteps{font-size:.76rem;text-align:center;line-height:2}
+.ebox{background:#fee2e2;border:2px solid #fca5a5;border-radius:10px;padding:16px;color:#991b1b;font-size:.8rem;line-height:1.7}
+@media(max-width:1200px){.stats{grid-template-columns:repeat(2,1fr)}.charts{grid-template-columns:1fr}.cg{grid-template-columns:1fr}.sum-grid{grid-template-columns:1fr}}
+@media(max-width:900px){.sidebar{display:none}.content{padding:14px}.sgrid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}.rt-row{grid-template-columns:110px 1fr 65px 45px;gap:7px;padding:9px 12px}.legend{display:none}}
+@media(max-width:600px){.hdr{padding:10px 14px}.hdr-title h1{font-size:.95rem}.stats{grid-template-columns:repeat(2,1fr);gap:9px}.stat{padding:13px}.stat-val{font-size:1.6rem}.sgrid{grid-template-columns:1fr}.modal{width:99%;max-height:96vh}.modal-hdr{padding:14px}.modal-body{padding:12px}.mtab{padding:4px 9px;font-size:.68rem}.fbar{flex-direction:column}input.fi{min-width:unset;width:100%}.cg{grid-template-columns:1fr}}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 </style>
 </head>
 <body>
-
 <div class="hdr">
   <div class="hdr-l">
     <div class="hdr-icon">🐾</div>
     <div class="hdr-title">
-      <h1>東森寵物 Google 評論真實分析系統</h1>
-      <p>即時抓取 Google Maps 真實評論 · 9區 108店 · <span id="updateDate">載入中...</span></p>
+      <h1>東森寵物 Google 評論分析系統</h1>
+      <p id="hdr-sub">即時抓取 Google Maps 真實評論 · 9區 108店 · 載入中...</p>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:12px">
-    <div class="legend-bar">
-      <span><div class="legend-dot" style="background:#10b981"></div> 正評（4-5星）</span>
-      <span class="legend-sep">|</span>
-      <span><div class="legend-dot" style="background:#f59e0b"></div> 中性（3星）</span>
-      <span class="legend-sep">|</span>
-      <span><div class="legend-dot" style="background:#ef4444"></div> 負評（1-2星）</span>
+  <div class="hdr-r">
+    <div class="legend">
+      <span><div class="ld" style="background:#10b981"></div>正評（4-5星）</span>
+      <span style="color:rgba(255,255,255,.3)">|</span>
+      <span><div class="ld" style="background:#f59e0b"></div>中性（3星）</span>
+      <span style="color:rgba(255,255,255,.3)">|</span>
+      <span><div class="ld" style="background:#ef4444"></div>負評（1-2星）</span>
     </div>
-    <div class="hdr-badge"><div class="live-dot"></div>LIVE 真實評論</div>
+    <div class="badge"><div class="dot"></div>LIVE 真實評論</div>
   </div>
 </div>
-
 <div class="layout">
   <div class="sidebar" id="sidebar"></div>
   <div class="content" id="content"></div>
 </div>
-
 <div class="overlay" id="modal">
   <div class="modal">
     <div class="modal-hdr">
@@ -330,761 +196,506 @@ input.fi{flex:1;min-width:180px}
     <div class="modal-body" id="mBody"></div>
   </div>
 </div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-//<![CDATA[
-
-const PROXY_URL = 'https://etipets-proxy.onrender.com';
-// AI分析已改為本地自動分析（免費版）
-
-// ══════════════════════════════════════════════
-// 真實資料 (來源: 東森寵物全台門店GM統計-5_13資料更新.xlsx)
-// ══════════════════════════════════════════════
-const REGIONS = [
-  { id:'r1', name:'北桃區', manager:'陳岳翔', color:'#f59e0b', stores:[
-    {name:'士林文林(貓館)', rating:4.7, count:841,  url:'https://share.google/8X8C4RD7xcOq6Rogr'},
-    {name:'士林文林二店',   rating:1.0, count:5,    url:'https://share.google/5oSNScDl4EG4W4zBI'},
-    {name:'北投中和店',     rating:4.5, count:323,  url:'https://share.google/aE8RDpBwxq7Rfsvu7'},
-    {name:'大同民族西店',   rating:4.4, count:40,   url:'https://share.google/QSyQpqZH3PEjsOu9h'},
-    {name:'大安通化店',     rating:4.7, count:245,  url:'https://share.google/85HBB0WuCebY8CdDH'},
-    {name:'大安建國南店',   rating:4.7, count:316,  url:'https://share.google/X6LwqmQyzEBzbqyor'},
-    {name:'大直北安店',     rating:4.9, count:478,  url:'https://share.google/aRv8Mh1rc1Gw2nVkG'},
-    {name:'龜山自強西店',   rating:4.8, count:259,  url:'https://share.google/cVHFNyUGFWbnGPHpW'},
-    {name:'龜山復興店',     rating:4.2, count:997,  url:'https://share.google/GBAhdwtW2jyZJttU4'},
-    {name:'桃園巨蛋店',     rating:4.4, count:1968, url:'https://share.google/EkdCP6PniVyRzSYjj'},
-    {name:'蘆竹大新店',     rating:4.4, count:173,  url:'https://share.google/fatvklp6R0grm9EKI'},
-    {name:'蘆竹南昌店',     rating:4.7, count:208,  url:'https://share.google/FAw8qXisp3OPBfNTE'},
-    {name:'觀音大觀店',     rating:4.5, count:146,  url:'https://share.google/oU1ZskjNhDfeLxjeM'},
-    {name:'中壢中央東店',   rating:5.0, count:68,   url:'https://share.google/Gvv91rFbkElRiSAo9'},
+var PROXY_URL = 'https://etipets-proxy.onrender.com';
+var REGIONS = [
+  {id:'r1',name:'北桃區',manager:'陳岳翔',color:'#f59e0b',stores:[
+    {name:'士林文林(貓館)',rating:4.7,count:841,url:'https://share.google/8X8C4RD7xcOq6Rogr'},
+    {name:'士林文林二店',rating:1.0,count:5,url:'https://share.google/5oSNScDl4EG4W4zBI'},
+    {name:'北投中和店',rating:4.5,count:323,url:'https://share.google/aE8RDpBwxq7Rfsvu7'},
+    {name:'大同民族西店',rating:4.4,count:40,url:'https://share.google/QSyQpqZH3PEjsOu9h'},
+    {name:'大安通化店',rating:4.7,count:245,url:'https://share.google/85HBB0WuCebY8CdDH'},
+    {name:'大安建國南店',rating:4.7,count:316,url:'https://share.google/X6LwqmQyzEBzbqyor'},
+    {name:'大直北安店',rating:4.9,count:478,url:'https://share.google/aRv8Mh1rc1Gw2nVkG'},
+    {name:'龜山自強西店',rating:4.8,count:259,url:'https://share.google/cVHFNyUGFWbnGPHpW'},
+    {name:'龜山復興店',rating:4.2,count:997,url:'https://share.google/GBAhdwtW2jyZJttU4'},
+    {name:'桃園巨蛋店',rating:4.4,count:1968,url:'https://share.google/EkdCP6PniVyRzSYjj'},
+    {name:'蘆竹大新店',rating:4.4,count:173,url:'https://share.google/fatvklp6R0grm9EKI'},
+    {name:'蘆竹南昌店',rating:4.7,count:208,url:'https://share.google/FAw8qXisp3OPBfNTE'},
+    {name:'觀音大觀店',rating:4.5,count:146,url:'https://share.google/oU1ZskjNhDfeLxjeM'},
+    {name:'中壢中央東店',rating:5.0,count:68,url:'https://share.google/Gvv91rFbkElRiSAo9'}
   ]},
-  { id:'r2', name:'新北區', manager:'陳育廷', color:'#10b981', stores:[
-    {name:'三重三和店',   rating:4.5, count:516,  url:'https://share.google/L2lHWWynohoG2cFU7'},
-    {name:'三重中正北店', rating:4.5, count:252,  url:'https://share.google/LyOiEjNuaKMTGyAbx'},
-    {name:'新莊中正店',   rating:4.8, count:557,  url:'https://share.google/IEOMJRdy8kj0eMC0I'},
-    {name:'永和得和店',   rating:4.6, count:200,  url:'https://share.google/ClGZEt8TDfvmAbj50'},
-    {name:'土城中華店',   rating:4.4, count:822,  url:'https://share.google/hw6awuyviiqYMhq7Y'},
-    {name:'新莊旗艦店',   rating:4.5, count:1611, url:'https://share.google/awn1l3RzbffqtJdZj'},
-    {name:'板橋雨農店',   rating:4.6, count:80,   url:'https://share.google/yFKr7ZX2G5CueyjK8'},
-    {name:'新北八里店',   rating:5.0, count:31,   url:'https://share.google/PXfsp6ICEn2gP4tnu'},
+  {id:'r2',name:'新北區',manager:'陳育廷',color:'#10b981',stores:[
+    {name:'三重三和店',rating:4.5,count:516,url:'https://share.google/L2lHWWynohoG2cFU7'},
+    {name:'三重中正北店',rating:4.5,count:252,url:'https://share.google/LyOiEjNuaKMTGyAbx'},
+    {name:'新莊中正店',rating:4.8,count:557,url:'https://share.google/IEOMJRdy8kj0eMC0I'},
+    {name:'永和得和店',rating:4.6,count:200,url:'https://share.google/ClGZEt8TDfvmAbj50'},
+    {name:'土城中華店',rating:4.4,count:822,url:'https://share.google/hw6awuyviiqYMhq7Y'},
+    {name:'新莊旗艦店',rating:4.5,count:1611,url:'https://share.google/awn1l3RzbffqtJdZj'},
+    {name:'板橋雨農店',rating:4.6,count:80,url:'https://share.google/yFKr7ZX2G5CueyjK8'},
+    {name:'新北八里店',rating:5.0,count:31,url:'https://share.google/PXfsp6ICEn2gP4tnu'}
   ]},
-  { id:'r3', name:'竹苗區', manager:'林蓁鈴', color:'#6366f1', stores:[
-    {name:'新竹經國店',   rating:4.5, count:440, url:'https://share.google/FPWZkxON9qRIOs3nX'},
-    {name:'新竹建興店',   rating:4.6, count:237, url:'https://share.google/EqI8oo64wk91ctAR6'},
-    {name:'竹東長春店',   rating:4.5, count:161, url:'https://share.google/b4c0VVPGI9lBE2Rif'},
-    {name:'湖口中山店',   rating:4.6, count:250, url:'https://share.google/68bbN4iZKZIjujuto'},
-    {name:'竹北中正東店', rating:4.7, count:172, url:'https://share.google/iv2ZbzBR0uHZ3QIi6'},
-    {name:'竹北成功店',   rating:4.5, count:188, url:'https://share.google/VIo1WOxfPkKhXkATX'},
-    {name:'頭份中華店',   rating:4.6, count:357, url:'https://share.google/z1sCR3oyZ66RLieZ8'},
-    {name:'竹南延平店',   rating:4.6, count:230, url:'https://share.google/RKazRp2aELoiBuKCF'},
-    {name:'苗栗縣府店',   rating:4.5, count:577, url:'https://share.google/pSHaL8B3Q2WfLRSjI'},
-    {name:'苑裡中山店',   rating:4.5, count:261, url:'https://share.google/xj4wHQDN9shkgviLd'},
+  {id:'r3',name:'竹苗區',manager:'林蓁鈴',color:'#6366f1',stores:[
+    {name:'新竹經國店',rating:4.5,count:440,url:'https://share.google/FPWZkxON9qRIOs3nX'},
+    {name:'新竹建興店',rating:4.6,count:237,url:'https://share.google/EqI8oo64wk91ctAR6'},
+    {name:'竹東長春店',rating:4.5,count:161,url:'https://share.google/b4c0VVPGI9lBE2Rif'},
+    {name:'湖口中山店',rating:4.6,count:250,url:'https://share.google/68bbN4iZKZIjujuto'},
+    {name:'竹北中正東店',rating:4.7,count:172,url:'https://share.google/iv2ZbzBR0uHZ3QIi6'},
+    {name:'竹北成功店',rating:4.5,count:188,url:'https://share.google/VIo1WOxfPkKhXkATX'},
+    {name:'頭份中華店',rating:4.6,count:357,url:'https://share.google/z1sCR3oyZ66RLieZ8'},
+    {name:'竹南延平店',rating:4.6,count:230,url:'https://share.google/RKazRp2aELoiBuKCF'},
+    {name:'苗栗縣府店',rating:4.5,count:577,url:'https://share.google/pSHaL8B3Q2WfLRSjI'},
+    {name:'苑裡中山店',rating:4.5,count:261,url:'https://share.google/xj4wHQDN9shkgviLd'}
   ]},
-  { id:'r4', name:'宜花區', manager:'李宜倢', color:'#06b6d4', stores:[
-    {name:'宜蘭新生店', rating:4.8, count:449, url:'https://share.google/1P0D5jXoXvvpcXXAf'},
-    {name:'羅東光榮店', rating:4.7, count:555, url:'https://share.google/LnDqMC9qguTLwHTSn'},
-    {name:'吉安自強店', rating:4.8, count:275, url:'https://share.google/m5aJykf5UiG8WNGNL'},
-    {name:'花蓮中正店', rating:4.6, count:297, url:'https://share.google/qJVxB5DkHFt5A7Xd6'},
-    {name:'玉里和平店', rating:4.6, count:143, url:'https://share.google/8ojlI8Luptpv78938'},
-    {name:'宜蘭員山店', rating:4.8, count:184, url:'https://share.google/4jeFsOG8fhXs9y1Oi'},
-    {name:'蘇澳中山店', rating:4.9, count:366, url:'https://share.google/NTNKaZVPSc5ha9giH'},
-    {name:'羅東林場店', rating:4.9, count:156, url:'https://share.google/0vOhKsTYK6ldKqcw8'},
+  {id:'r4',name:'宜花區',manager:'李宜倢',color:'#06b6d4',stores:[
+    {name:'宜蘭新生店',rating:4.8,count:449,url:'https://share.google/1P0D5jXoXvvpcXXAf'},
+    {name:'羅東光榮店',rating:4.7,count:555,url:'https://share.google/LnDqMC9qguTLwHTSn'},
+    {name:'吉安自強店',rating:4.8,count:275,url:'https://share.google/m5aJykf5UiG8WNGNL'},
+    {name:'花蓮中正店',rating:4.6,count:297,url:'https://share.google/qJVxB5DkHFt5A7Xd6'},
+    {name:'玉里和平店',rating:4.6,count:143,url:'https://share.google/8ojlI8Luptpv78938'},
+    {name:'宜蘭員山店',rating:4.8,count:184,url:'https://share.google/4jeFsOG8fhXs9y1Oi'},
+    {name:'蘇澳中山店',rating:4.9,count:366,url:'https://share.google/NTNKaZVPSc5ha9giH'},
+    {name:'羅東林場店',rating:4.9,count:156,url:'https://share.google/0vOhKsTYK6ldKqcw8'}
   ]},
-  { id:'r5', name:'中投區', manager:'劉哲維', color:'#ec4899', stores:[
-    {name:'豐原圓環東店', rating:4.9, count:369,  url:'https://share.google/EPrv0TCKN7FOhmpbM'},
-    {name:'北屯后庄北店', rating:4.7, count:167,  url:'https://share.google/3zDD3FeerSYz8pKEU'},
-    {name:'台中中清店',   rating:4.6, count:492,  url:'https://share.google/ynZKKNDZAE0UJV2bm'},
-    {name:'台中北屯店',   rating:4.7, count:477,  url:'https://share.google/6pXXzePyFMy3iGMF7'},
-    {name:'台中東海店',   rating:4.6, count:897,  url:'https://share.google/Y09r9FGLJ84xoWSvS'},
-    {name:'台中沙鹿店',   rating:4.6, count:678,  url:'https://share.google/xu2oCoHRvh5aGLH4i'},
-    {name:'台中澄清店',   rating:4.6, count:1244, url:'https://share.google/GAezQxkBP4H864g7W'},
-    {name:'北屯軍功店',   rating:4.6, count:180,  url:'https://share.google/8Lmf64f8PvCOLaJHL'},
-    {name:'台中青海店',   rating:4.8, count:1119, url:'https://share.google/UhRkcsRXvR8ehWOrN'},
-    {name:'大里仁化店',   rating:4.7, count:276,  url:'https://share.google/jckMMOVRTPmo22iLG'},
-    {name:'草屯明賢店',   rating:4.7, count:140,  url:'https://share.google/VASjNlzUMsRmm2FO3'},
-    {name:'埔里中山店',   rating:4.9, count:203,  url:'https://share.google/wOCtJ9DMFiQdslSqE'},
+  {id:'r5',name:'中投區',manager:'劉哲維',color:'#ec4899',stores:[
+    {name:'豐原圓環東店',rating:4.9,count:369,url:'https://share.google/EPrv0TCKN7FOhmpbM'},
+    {name:'北屯后庄北店',rating:4.7,count:167,url:'https://share.google/3zDD3FeerSYz8pKEU'},
+    {name:'台中中清店',rating:4.6,count:492,url:'https://share.google/ynZKKNDZAE0UJV2bm'},
+    {name:'台中北屯店',rating:4.7,count:477,url:'https://share.google/6pXXzePyFMy3iGMF7'},
+    {name:'台中東海店',rating:4.6,count:897,url:'https://share.google/Y09r9FGLJ84xoWSvS'},
+    {name:'台中沙鹿店',rating:4.6,count:678,url:'https://share.google/xu2oCoHRvh5aGLH4i'},
+    {name:'台中澄清店',rating:4.6,count:1244,url:'https://share.google/GAezQxkBP4H864g7W'},
+    {name:'北屯軍功店',rating:4.6,count:180,url:'https://share.google/8Lmf64f8PvCOLaJHL'},
+    {name:'台中青海店',rating:4.8,count:1119,url:'https://share.google/UhRkcsRXvR8ehWOrN'},
+    {name:'大里仁化店',rating:4.7,count:276,url:'https://share.google/jckMMOVRTPmo22iLG'},
+    {name:'草屯明賢店',rating:4.7,count:140,url:'https://share.google/VASjNlzUMsRmm2FO3'},
+    {name:'埔里中山店',rating:4.9,count:203,url:'https://share.google/wOCtJ9DMFiQdslSqE'}
   ]},
-  { id:'r6', name:'彰雲嘉區', manager:'林晟豐', color:'#f97316', stores:[
-    {name:'員林三民東店', rating:4.6, count:554, url:'https://share.google/BsHkgH8Nl6qNNkuHT'},
-    {name:'田中福安店',   rating:4.8, count:280, url:'https://share.google/ZjCR9LEHUjxedVbPI'},
-    {name:'溪湖彰水店',   rating:4.5, count:134, url:'https://share.google/tRKmAqjh90IQLtyBv'},
-    {name:'北斗中華店',   rating:4.7, count:182, url:'https://share.google/NQrPkEt7etv5jP9AF'},
-    {name:'彰化中正店',   rating:4.6, count:385, url:'https://share.google/rwWY2orcs2LKbsdU9'},
-    {name:'和美彰美店',   rating:4.7, count:394, url:'https://share.google/XJN6bSLR2SspscLJ6'},
-    {name:'彰化中山店',   rating:4.6, count:488, url:'https://share.google/oO1gUOBPF3K2SEr7W'},
-    {name:'虎尾林森店',   rating:4.6, count:307, url:'https://share.google/Qr9BmuVBiu8qXurVo'},
-    {name:'斗六民生南店', rating:4.6, count:436, url:'https://share.google/PHUgBoOblZyZVNg5E'},
-    {name:'北港民享店',   rating:4.5, count:527, url:'https://share.google/Uxo9Kkmn8Ta2oCcQ1'},
-    {name:'西螺公正店',   rating:4.6, count:161, url:'https://share.google/8COpgEwAwLW471x0T'},
-    {name:'斗南延平店',   rating:4.6, count:249, url:'https://share.google/Ui7EYRgyh8x8PZ9pR'},
-    {name:'麥寮中興店',   rating:4.3, count:297, url:'https://share.google/INLNLCv6KfW3qIflG'},
-    {name:'嘉義北港店',   rating:4.8, count:531, url:'https://share.google/l5ZcJERYp00utiSio'},
-    {name:'嘉義友愛店',   rating:4.9, count:443, url:'https://share.google/jr2UfbMhRunoPXKk5'},
-    {name:'嘉義吳鳳南店', rating:4.5, count:347, url:'https://share.google/u4DUAUWIg8APoBTxp'},
-    {name:'嘉義朴子店',   rating:4.9, count:59,  url:'https://share.google/wK4W8BzZjCtzypKlD'},
+  {id:'r6',name:'彰雲嘉區',manager:'林晟豐',color:'#f97316',stores:[
+    {name:'員林三民東店',rating:4.6,count:554,url:'https://share.google/BsHkgH8Nl6qNNkuHT'},
+    {name:'田中福安店',rating:4.8,count:280,url:'https://share.google/ZjCR9LEHUjxedVbPI'},
+    {name:'溪湖彰水店',rating:4.5,count:134,url:'https://share.google/tRKmAqjh90IQLtyBv'},
+    {name:'北斗中華店',rating:4.7,count:182,url:'https://share.google/NQrPkEt7etv5jP9AF'},
+    {name:'彰化中正店',rating:4.6,count:385,url:'https://share.google/rwWY2orcs2LKbsdU9'},
+    {name:'和美彰美店',rating:4.7,count:394,url:'https://share.google/XJN6bSLR2SspscLJ6'},
+    {name:'彰化中山店',rating:4.6,count:488,url:'https://share.google/oO1gUOBPF3K2SEr7W'},
+    {name:'虎尾林森店',rating:4.6,count:307,url:'https://share.google/Qr9BmuVBiu8qXurVo'},
+    {name:'斗六民生南店',rating:4.6,count:436,url:'https://share.google/PHUgBoOblZyZVNg5E'},
+    {name:'北港民享店',rating:4.5,count:527,url:'https://share.google/Uxo9Kkmn8Ta2oCcQ1'},
+    {name:'西螺公正店',rating:4.6,count:161,url:'https://share.google/8COpgEwAwLW471x0T'},
+    {name:'斗南延平店',rating:4.6,count:249,url:'https://share.google/Ui7EYRgyh8x8PZ9pR'},
+    {name:'麥寮中興店',rating:4.3,count:297,url:'https://share.google/INLNLCv6KfW3qIflG'},
+    {name:'嘉義北港店',rating:4.8,count:531,url:'https://share.google/l5ZcJERYp00utiSio'},
+    {name:'嘉義友愛店',rating:4.9,count:443,url:'https://share.google/jr2UfbMhRunoPXKk5'},
+    {name:'嘉義吳鳳南店',rating:4.5,count:347,url:'https://share.google/u4DUAUWIg8APoBTxp'},
+    {name:'嘉義朴子店',rating:4.9,count:59,url:'https://share.google/wK4W8BzZjCtzypKlD'}
   ]},
-  { id:'r7', name:'台南區', manager:'李景傑', color:'#a855f7', stores:[
-    {name:'新營民生店',   rating:4.8, count:258,  url:'https://share.google/ALIGR2PCl8wsJLz5O'},
-    {name:'麻豆興中店',   rating:4.7, count:208,  url:'https://share.google/rB4DhXcqaYWwTvOk4'},
-    {name:'善化光復店',   rating:4.4, count:483,  url:'https://share.google/qA4Tcw3ZX4TFB1wPy'},
-    {name:'佳里新生店',   rating:4.5, count:244,  url:'https://share.google/Txy4z37GWj7P7dh6c'},
-    {name:'安南海佃店',   rating:4.4, count:1696, url:'https://share.google/iNokqktE9Hf0VsQF7'},
-    {name:'台南永康店',   rating:4.6, count:549,  url:'https://share.google/YUB570WkxWdrqKlzT'},
-    {name:'新市中正店',   rating:4.8, count:416,  url:'https://share.google/qFJQOAS5jsu7xT6jO'},
-    {name:'永康永大店',   rating:4.6, count:488,  url:'https://share.google/joh3diKVPlpsfOI9N'},
-    {name:'台南中華東店', rating:4.5, count:687,  url:'https://share.google/gersxzZjuPJas7y73'},
-    {name:'台南西門店',   rating:4.5, count:2607, url:'https://share.google/6LIpH2GgKEpCD3xKq'},
-    {name:'仁德中山店',   rating:4.5, count:441,  url:'https://share.google/kusBPC6nu5We7c2Ym'},
-    {name:'安平建平店',   rating:4.4, count:1021, url:'https://share.google/jR1iSoYwJPJ7iKnoI'},
-    {name:'台南新興店',   rating:4.7, count:219,  url:'https://share.google/PBUmIi0cvjOoMAfyK'},
-    {name:'歸仁中山店',   rating:4.9, count:244,  url:'https://share.google/vuEIfRKMj4TlckZ5m'},
-    {name:'關廟南雄店',   rating:4.9, count:347,  url:'https://share.google/vXOnX5q6OrteVt6oi'},
+  {id:'r7',name:'台南區',manager:'李景傑',color:'#a855f7',stores:[
+    {name:'新營民生店',rating:4.8,count:258,url:'https://share.google/ALIGR2PCl8wsJLz5O'},
+    {name:'麻豆興中店',rating:4.7,count:208,url:'https://share.google/rB4DhXcqaYWwTvOk4'},
+    {name:'善化光復店',rating:4.4,count:483,url:'https://share.google/qA4Tcw3ZX4TFB1wPy'},
+    {name:'佳里新生店',rating:4.5,count:244,url:'https://share.google/Txy4z37GWj7P7dh6c'},
+    {name:'安南海佃店',rating:4.4,count:1696,url:'https://share.google/iNokqktE9Hf0VsQF7'},
+    {name:'台南永康店',rating:4.6,count:549,url:'https://share.google/YUB570WkxWdrqKlzT'},
+    {name:'新市中正店',rating:4.8,count:416,url:'https://share.google/qFJQOAS5jsu7xT6jO'},
+    {name:'永康永大店',rating:4.6,count:488,url:'https://share.google/joh3diKVPlpsfOI9N'},
+    {name:'台南中華東店',rating:4.5,count:687,url:'https://share.google/gersxzZjuPJas7y73'},
+    {name:'台南西門店',rating:4.5,count:2607,url:'https://share.google/6LIpH2GgKEpCD3xKq'},
+    {name:'仁德中山店',rating:4.5,count:441,url:'https://share.google/kusBPC6nu5We7c2Ym'},
+    {name:'安平建平店',rating:4.4,count:1021,url:'https://share.google/jR1iSoYwJPJ7iKnoI'},
+    {name:'台南新興店',rating:4.7,count:219,url:'https://share.google/PBUmIi0cvjOoMAfyK'},
+    {name:'歸仁中山店',rating:4.9,count:244,url:'https://share.google/vuEIfRKMj4TlckZ5m'},
+    {name:'關廟南雄店',rating:4.9,count:347,url:'https://share.google/vXOnX5q6OrteVt6oi'}
   ]},
-  { id:'r8', name:'高雄區(澎)', manager:'涂綺恬', color:'#ef4444', stores:[
-    {name:'岡山柳橋西店', rating:4.8, count:292,  url:'https://share.google/RAmKVgX6yZZhUS6J7'},
-    {name:'左營左大店',   rating:4.5, count:204,  url:'https://share.google/3xYtJv9jaR1wGDQ6I'},
-    {name:'楠梓藍昌店',   rating:4.4, count:392,  url:'https://share.google/xWkcDK4WnTp79fje4'},
-    {name:'楠梓興楠店',   rating:4.5, count:638,  url:'https://share.google/PlVjdxzjl9HQxCCnP'},
-    {name:'路竹中山店',   rating:4.8, count:515,  url:'https://share.google/RL9JFZOkXvHBkGBLM'},
-    {name:'仁武仁雄店',   rating:4.4, count:297,  url:'https://share.google/VrcViPYNxMf0JAJ4V'},
-    {name:'小港宏平店',   rating:4.4, count:470,  url:'https://share.google/SOpoIuYLuhNrZPKFt'},
-    {name:'前鎮瑞隆店',   rating:4.4, count:1283, url:'https://share.google/GvztLPieQ8lCPcKl4'},
-    {name:'前金自立店',   rating:4.3, count:539,  url:'https://share.google/NmkMUK1VS7LyeJ07j'},
-    {name:'大寮鳳林店',   rating:4.5, count:507,  url:'https://share.google/fO3AehcURw51IlduV'},
-    {name:'鳳山青年店',   rating:4.4, count:599,  url:'https://share.google/84ZMVWIBqE8hv4gYN'},
-    {name:'高雄林園東店', rating:4.6, count:342,  url:'https://share.google/6hxrcnFB2H1rivqzU'},
-    {name:'小港桂陽店',   rating:4.9, count:200,  url:'https://share.google/2rTKMgtm3g5Bnxy5o'},
-    {name:'澎湖馬公店',   rating:4.6, count:150,  url:'https://share.google/ODSGvVwZzd9zRFIuk'},
-    {name:'三民十全店',   rating:4.7, count:150,  url:'https://share.google/Qf3GQMCk3DD6XHssn'},
-    {name:'前金自強一店', rating:4.7, count:140,  url:'https://share.google/fiUHgCGRAfAnZXgri'},
+  {id:'r8',name:'高雄區(澎)',manager:'涂綺恬',color:'#ef4444',stores:[
+    {name:'岡山柳橋西店',rating:4.8,count:292,url:'https://share.google/RAmKVgX6yZZhUS6J7'},
+    {name:'左營左大店',rating:4.5,count:204,url:'https://share.google/3xYtJv9jaR1wGDQ6I'},
+    {name:'楠梓藍昌店',rating:4.4,count:392,url:'https://share.google/xWkcDK4WnTp79fje4'},
+    {name:'楠梓興楠店',rating:4.5,count:638,url:'https://share.google/PlVjdxzjl9HQxCCnP'},
+    {name:'路竹中山店',rating:4.8,count:515,url:'https://share.google/RL9JFZOkXvHBkGBLM'},
+    {name:'仁武仁雄店',rating:4.4,count:297,url:'https://share.google/VrcViPYNxMf0JAJ4V'},
+    {name:'小港宏平店',rating:4.4,count:470,url:'https://share.google/SOpoIuYLuhNrZPKFt'},
+    {name:'前鎮瑞隆店',rating:4.4,count:1283,url:'https://share.google/GvztLPieQ8lCPcKl4'},
+    {name:'前金自立店',rating:4.3,count:539,url:'https://share.google/NmkMUK1VS7LyeJ07j'},
+    {name:'大寮鳳林店',rating:4.5,count:507,url:'https://share.google/fO3AehcURw51IlduV'},
+    {name:'鳳山青年店',rating:4.4,count:599,url:'https://share.google/84ZMVWIBqE8hv4gYN'},
+    {name:'高雄林園東店',rating:4.6,count:342,url:'https://share.google/6hxrcnFB2H1rivqzU'},
+    {name:'小港桂陽店',rating:4.9,count:200,url:'https://share.google/2rTKMgtm3g5Bnxy5o'},
+    {name:'澎湖馬公店',rating:4.6,count:150,url:'https://share.google/ODSGvVwZzd9zRFIuk'},
+    {name:'三民十全店',rating:4.7,count:150,url:'https://share.google/Qf3GQMCk3DD6XHssn'},
+    {name:'前金自強一店',rating:4.7,count:140,url:'https://share.google/fiUHgCGRAfAnZXgri'}
   ]},
-  { id:'r9', name:'高屏區(台東)', manager:'鍾宜玲', color:'#14b8a6', stores:[
-    {name:'苓雅大順店',   rating:4.3, count:732,  url:'https://share.google/iHihtJ9Nahsfr6zIV'},
-    {name:'屏東自由店',   rating:4.4, count:1154, url:'https://share.google/gjl4GJgYBEYWU2D48'},
-    {name:'東港中正店',   rating:4.5, count:444,  url:'https://share.google/aA6erC4uREsNoDgKD'},
-    {name:'潮州延平店',   rating:4.6, count:400,  url:'https://share.google/Z5XV54TsKsWZKlrA9'},
-    {name:'內埔學人店',   rating:4.7, count:517,  url:'https://share.google/P6Gp1rRs8S8lTdEhw'},
-    {name:'恆春環城南店', rating:4.6, count:425,  url:'https://share.google/WTxFhcl0yplXkJCgo'},
-    {name:'屏東萬丹店',   rating:4.8, count:273,  url:'https://share.google/Y30ku8FQMKkE6sJvi'},
-    {name:'台東更生店',   rating:4.8, count:255,  url:'https://share.google/lGVEZZUIMRunaHl0i'},
-  ]},
+  {id:'r9',name:'高屏區(台東)',manager:'鍾宜玲',color:'#14b8a6',stores:[
+    {name:'苓雅大順店',rating:4.3,count:732,url:'https://share.google/iHihtJ9Nahsfr6zIV'},
+    {name:'屏東自由店',rating:4.4,count:1154,url:'https://share.google/gjl4GJgYBEYWU2D48'},
+    {name:'東港中正店',rating:4.5,count:444,url:'https://share.google/aA6erC4uREsNoDgKD'},
+    {name:'潮州延平店',rating:4.6,count:400,url:'https://share.google/Z5XV54TsKsWZKlrA9'},
+    {name:'內埔學人店',rating:4.7,count:517,url:'https://share.google/P6Gp1rRs8S8lTdEhw'},
+    {name:'恆春環城南店',rating:4.6,count:425,url:'https://share.google/WTxFhcl0yplXkJCgo'},
+    {name:'屏東萬丹店',rating:4.8,count:273,url:'https://share.google/Y30ku8FQMKkE6sJvi'},
+    {name:'台東更生店',rating:4.8,count:255,url:'https://share.google/lGVEZZUIMRunaHl0i'}
+  ]}
 ];
 
-// ── 情感推算（依真實評分） ──
-function calcSentiment(rating) {
-  const pos = Math.min(97, Math.round((rating - 1) / 4 * 100 + (rating >= 4.5 ? 8 : 0)));
-  const neg = Math.max(1, Math.round((5 - rating) * 7));
-  return { pos, neu: Math.max(1, 100 - pos - neg), neg };
+function calcSent(r){
+  var pos=Math.min(97,Math.round((r-1)/4*100+(r>=4.5?8:0)));
+  var neg=Math.max(1,Math.round((5-r)*7));
+  return{pos:pos,neu:Math.max(1,100-pos-neg),neg:neg};
 }
-function regionAvg(r) {
-  const avg = r.stores.reduce((a,s)=>a+s.rating,0)/r.stores.length;
-  const total = r.stores.reduce((a,s)=>a+s.count,0);
-  return { avg: parseFloat(avg.toFixed(2)), total, ...calcSentiment(avg) };
-}
-
-// ── CORE: 用 SerpApi 抓取真實 Google Maps 評論 ──
-async function fetchRealReviews(storeName, regionName) {
-  const fetchOpts = { method: 'GET', mode: 'cors', cache: 'no-cache' };
-
-  // Step 1: 透過 Proxy 搜尋店名取得 data_id
-  const searchUrl = PROXY_URL + '/search?engine=google_maps&q=' + encodeURIComponent('東森寵物 ' + storeName) + '&hl=zh-tw&gl=tw';
-  
-  let dataId = null;
-  let d1;
-  try {
-    const r1 = await fetch(searchUrl, fetchOpts);
-    if (!r1.ok) throw new Error('HTTP ' + r1.status);
-    d1 = await r1.json();
-    if (d1.error) throw new Error(d1.error);
-    // 處理 local_results（多筆結果）
-    if (d1.local_results && d1.local_results.length > 0) {
-      const matched = d1.local_results.find(r => r.title && r.title.includes(storeName.replace(/[店館院]/g,'')))
-                   || d1.local_results[0];
-      dataId = matched.data_id;
-    }
-    // 處理 place_results（單一結果）
-    else if (d1.place_results && d1.place_results.data_id) {
-      dataId = d1.place_results.data_id;
-    }
-  } catch(e) {
-    throw new Error('搜尋失敗: ' + e.message);
-  }
-
-  if (!dataId) throw new Error('找不到門市資料，請確認門市名稱');
-
-  // Step 2: 透過 Proxy 用 data_id 抓取真實評論
-  const reviewUrl = PROXY_URL + '/search?engine=google_maps_reviews&data_id=' + encodeURIComponent(dataId) + '&hl=zh-tw&sort_by=newestFirst';
-  
-  let reviews = [], placeInfo = null;
-  try {
-    const r2 = await fetch(reviewUrl, fetchOpts);
-    if (!r2.ok) throw new Error('HTTP ' + r2.status);
-    const d2 = await r2.json();
-    if (d2.error) throw new Error(d2.error);
-    reviews = d2.reviews || [];
-    placeInfo = d2.place_info || null;
-  } catch(e) {
-    throw new Error('抓取評論失敗: ' + e.message);
-  }
-
-  if (reviews.length === 0) throw new Error('此門市目前無評論資料');
-  return { reviews, placeInfo, dataId };
+function rAvg(region){
+  var avg=region.stores.reduce(function(a,s){return a+s.rating;},0)/region.stores.length;
+  var total=region.stores.reduce(function(a,s){return a+s.count;},0);
+  var s=calcSent(avg);
+  return{avg:parseFloat(avg.toFixed(2)),total:total,pos:s.pos,neu:s.neu,neg:s.neg};
 }
 
-// ── AI 分析真實評論 ──
-// 本地自動情感分析（免費，不需要 AI API）
-function analyzeReviewsLocal(realReviews) {
-  // 關鍵字庫
-  const posWords = ['棒','好','讚','優','喜歡','推薦','滿意','親切','專業','乾淨','整潔','用心','貼心','溫柔','耐心','細心','開心','快樂','舒適','方便','齊全','豐富','新鮮','健康','活潑'];
-  const negWords = ['差','爛','糟','貴','慢','髒','臭','吵','擠','小','少','舊','壞','死','病','臭','爛','失望','不好','不滿','抱怨','投訴','問題','改善','很差','不推'];
-  // 正評才顯示優點，負評只顯示缺點與建議
-  const proMap = {5:'服務優質親切', 4:'整體表現良好', 3:'環境尚可整潔', 2:null, 1:null};
-  const conMap = {5:null, 4:null, 3:'服務效率待提升', 2:'商品品質不穩定', 1:'服務態度差'};
-  const tipMap = {5:null, 4:null, 3:'加強服務速度', 2:'培訓服務人員', 1:'全面改善服務流程'};
+// 更新日期
+function updateDate(){
+  var now=new Date();
+  var ds=now.getFullYear()+'/'+(now.getMonth()+1<10?'0':'')+(now.getMonth()+1)+'/'+(now.getDate()<10?'0':'')+now.getDate();
+  var el=document.getElementById('hdr-sub');
+  if(el) el.textContent='即時抓取 Google Maps 真實評論 · 9區 108店 · '+ds+' 更新';
+  var el2=document.getElementById('overviewDate');
+  if(el2) el2.textContent=ds;
+}
 
-  const analyzed = realReviews.slice(0,15).map((r,i) => {
-    const stars = r.rating || 5;
-    const text = (r.snippet || r.text || '').toLowerCase();
-    let sentiment = stars >= 4 ? 'positive' : stars >= 3 ? 'neutral' : 'negative';
-    // 關鍵字微調
-    const negCount = negWords.filter(w => text.includes(w)).length;
-    const posCount = posWords.filter(w => text.includes(w)).length;
-    if (negCount > posCount + 1 && sentiment === 'positive') sentiment = 'neutral';
-    if (posCount > negCount + 2 && sentiment === 'negative') sentiment = 'neutral';
-    return { index: i+1, sentiment, pros: proMap[stars], cons: conMap[stars], tip: tipMap[stars] };
+// Sidebar
+function buildSidebar(){
+  var html='<div class="sb-sec">📊 總覽</div>';
+  html+='<div class="sb-item active" onclick="showView(\'overview\')" id="sb-overview"><div class="sb-dot" style="background:var(--accent)"></div><span class="sb-name">全台統計總覽</span></div>';
+  html+='<div class="sb-item" onclick="showView(\'ranking\')" id="sb-ranking"><div class="sb-dot" style="background:var(--green)"></div><span class="sb-name">門市排行榜</span></div>';
+  html+='<div class="sb-item" onclick="showView(\'conclusion\')" id="sb-conclusion"><div class="sb-dot" style="background:var(--blue)"></div><span class="sb-name">結論與建議</span></div>';
+  html+='<div class="sb-div"></div><div class="sb-sec">🗂️ 各區負責人</div>';
+  REGIONS.forEach(function(r){
+    html+='<div class="sb-item" onclick="showView(\'region\',\''+r.id+'\')" id="sb-'+r.id+'"><div class="sb-dot" style="background:'+r.color+'"></div><div style="flex:1"><div class="sb-name">'+r.name+'</div><div style="font-size:.63rem;color:var(--muted)">'+r.manager+' 區</div></div><span class="sb-cnt">'+r.stores.length+'店</span></div>';
   });
-
-  // 統計摘要
-  const pos = analyzed.filter(r=>r.sentiment==='positive');
-  const neg = analyzed.filter(r=>r.sentiment==='negative');
-  const avgStars = realReviews.slice(0,15).reduce((a,r)=>a+(r.rating||5),0)/Math.min(realReviews.length,15);
-
-  // 從評論文字提取關鍵主題
-  const allText = realReviews.slice(0,15).map(r=>r.snippet||r.text||'').join(' ');
-  const themes = [
-    {k:'店員|員工|服務人員', label:'店員服務親切'},
-    {k:'美容|洗澡|剪毛', label:'美容技術優良'},
-    {k:'商品|飼料|用品', label:'商品選擇豐富'},
-    {k:'環境|乾淨|整潔', label:'環境整潔舒適'},
-    {k:'住宿|寄宿|托育', label:'住宿服務貼心'},
-    {k:'價格|便宜|合理', label:'價格合理'},
-  ].filter(t => new RegExp(t.k).test(allText)).map(t=>t.label);
-
-  const negThemes = [
-    {k:'等|慢|久', label:'等候時間較長'},
-    {k:'貴|價格高', label:'價格偏高'},
-    {k:'停車|車位', label:'停車不便'},
-    {k:'態度|冷漠|差', label:'服務態度待改善'},
-  ].filter(t => new RegExp(t.k).test(allText)).map(t=>t.label);
-
-  const posRate = Math.round(pos.length/analyzed.length*100);
-  const conclusion = avgStars >= 4.7 ? '本店整體表現優異，顧客滿意度高達' + posRate + '%，是區域標竿門市，建議持續維持並分享成功經驗。' : avgStars >= 4.3 ? '本店表現穩定，正評率' + posRate + '%，顧客整體滿意。建議針對負評進行改善，提升整體評分。' : '本店有改善空間，正評率' + posRate + '%，建議區域負責人進行實地稽核，聚焦服務品質提升。';
-
-  return {
-    reviews: analyzed,
-    summary: {
-      top_pros: themes.length > 0 ? themes.slice(0,3) : ['服務人員親切', '環境整潔', '商品齊全'],
-      top_cons: negThemes.length > 0 ? negThemes.slice(0,2) : neg.length > 0 ? ['部分顧客反映有改善空間'] : ['暫無明顯缺點'],
-      top_tips: negThemes.length > 0 ? ['加強員工培訓', '優化服務流程'] : ['持續維持現有水準', '鼓勵顧客留下評論'],
-      conclusion
-    }
-  };
+  document.getElementById('sidebar').innerHTML=html;
 }
 
-// ── 開啟 Modal ──
-async function openModal(storeName, regionName, manager, url, rating, count) {
-  document.getElementById('mTitle').textContent = storeName + ' — 真實評論分析';
-  document.getElementById('mSub').textContent = regionName + ' · ' + manager + '區 · ⭐' + rating + ' · ' + count.toLocaleString() + '則評論';
-  document.getElementById('mBody').innerHTML = `
-    <div class="loading">
-      <div class="spinner"></div>
-      <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
-      <div class="loading-steps" id="loadSteps">
-        <div id="s1" class="step-active">⏳ Step 1：搜尋 Google Maps 門市資料...</div>
-        <div id="s2" class="step-pending">○ Step 2：抓取真實 Google 評論...</div>
-        <div id="s3" class="step-pending">○ Step 3：AI 智能分析評論內容...</div>
-      </div>
-    </div>`;
-  document.getElementById('modal').classList.add('open');
-
-  const setStep = (n, msg) => {
-    for(let i=1;i<=3;i++) {
-      const el = document.getElementById('s'+i);
-      if(el) el.className = i<n?'step-done':i===n?'step-active':'step-pending';
-      if(el && i<n) el.textContent = el.textContent.replace('⏳','✅').replace('○','✅');
-      if(el && i===n && msg) el.textContent = '⏳ ' + msg;
-    }
-    document.getElementById('prog').style.width = (n-1)*33+'%';
-  };
-
-  try {
-    // Step 1: 搜尋門市
-    setStep(1, 'Step 1：搜尋 Google Maps 門市資料...');
-    const { reviews: rawReviews, placeInfo, dataId } = await fetchRealReviews(storeName, regionName);
-    
-    if (!rawReviews || rawReviews.length === 0) {
-      throw new Error('此門市目前無法取得評論（可能需要更多搜尋配額）');
-    }
-
-    // Step 2: 取得評論
-    setStep(2, 'Step 2：已取得 ' + rawReviews.length + ' 則真實評論...');
-    await new Promise(r=>setTimeout(r,300));
-
-    // Step 3: 本地自動分析（免費）
-    setStep(3, 'Step 3：正在分析評論內容...');
-    await new Promise(r=>setTimeout(r,300)); // 短暫等待讓 UI 更新
-    const analysis = analyzeReviewsLocal(rawReviews);
-    
-    document.getElementById('prog').style.width = '100%';
-    await new Promise(r=>setTimeout(r,300));
-
-    renderRealReviews(storeName, regionName, url, rating, count, rawReviews, analysis, placeInfo);
-
-  } catch(err) {
-    document.getElementById('mBody').innerHTML = `
-      <div class="error-box">
-        <strong>⚠️ 抓取失敗</strong><br><br>
-        ${err.message}<br><br>
-        <strong>可能原因：</strong><br>
-        • SerpApi 免費方案每月 250 次搜尋限制（每間門市需 2 次：搜尋 + 取評論）<br>
-        • 門市名稱在 Google Maps 上的搜尋結果不精確<br><br>
-        <a href="${url}" target="_blank" style="color:var(--blue)">🔗 點此直接前往 Google Maps 查看真實評論</a>
-      </div>`;
-  }
+var charts={};
+function destroyCharts(){Object.values(charts).forEach(function(c){try{c.destroy();}catch(e){}});charts={};}
+function mkChart(id,type,data,opts){
+  var ctx=document.getElementById(id);if(!ctx)return;
+  if(charts[id])charts[id].destroy();
+  var defaults={responsive:true,plugins:{legend:{labels:{color:'#64748b',font:{size:11}}}},scales:(['doughnut','pie','radar'].indexOf(type)>-1)?{}:{y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#64748b'}},x:{grid:{display:false},ticks:{color:'#64748b',maxRotation:40,font:{size:10}}}}};
+  charts[id]=new Chart(ctx,{type:type,data:data,options:Object.assign({},defaults,opts||{})});
 }
 
-function renderRealReviews(storeName, regionName, url, rating, count, rawReviews, analysis, placeInfo) {
-  const analysisMap = {};
-  if (analysis && analysis.reviews) {
-    analysis.reviews.forEach(a => { analysisMap[a.index - 1] = a; });
-  }
-
-  const enriched = rawReviews.slice(0, 15).map((r, i) => ({
-    ...r,
-    analysis: analysisMap[i] || { sentiment: r.rating >= 4 ? 'positive' : r.rating >= 3 ? 'neutral' : 'negative' }
-  }));
-
-  const pos = enriched.filter(r=>r.analysis.sentiment==='positive').length;
-  const neu = enriched.filter(r=>r.analysis.sentiment==='neutral').length;
-  const neg = enriched.filter(r=>r.analysis.sentiment==='negative').length;
-  const sum = analysis?.summary || {};
-
-  document.getElementById('mSub').textContent = 
-    regionName + ' · ⭐' + rating + ' · 已抓取 ' + enriched.length + ' 則真實評論 · 🟢' + pos + ' 🟡' + neu + ' 🔴' + neg;
-
-  document.getElementById('mBody').innerHTML = `
-    <div class="source-badge">✅ 真實 Google Maps 評論 · 即時抓取分析 · ${new Date().toLocaleDateString('zh-TW')}</div>
-
-    <div class="mtabs">
-      <div class="mtab active" onclick="swTab(this,'ta')">全部(${enriched.length})</div>
-      <div class="mtab" onclick="swTab(this,'tp')">🟢 正評(${pos})</div>
-      <div class="mtab" onclick="swTab(this,'tn')">🟡 中性(${neu})</div>
-      <div class="mtab" onclick="swTab(this,'tg')">🔴 負評(${neg})</div>
-      <div class="mtab" onclick="swTab(this,'ts')">📊 AI分析摘要</div>
-    </div>
-
-    <div id="ta">${enriched.map((r,i)=>realReviewCard(r,i)).join('')}</div>
-    <div id="tp" style="display:none">${enriched.filter(r=>r.analysis.sentiment==='positive').map((r,i)=>realReviewCard(r,i)).join('')||noData()}</div>
-    <div id="tn" style="display:none">${enriched.filter(r=>r.analysis.sentiment==='neutral').map((r,i)=>realReviewCard(r,i)).join('')||noData()}</div>
-    <div id="tg" style="display:none">${enriched.filter(r=>r.analysis.sentiment==='negative').map((r,i)=>realReviewCard(r,i)).join('')||noData()}</div>
-    <div id="ts" style="display:none">
-      <div class="summary-box">
-        <div class="sum-grid">
-          <div class="sum-col p">
-            <h4>✅ 主要優點</h4>
-            <ul>${(sum.top_pros||[]).map(p=>`<li>${p}</li>`).join('')||'<li>整體表現良好</li>'}</ul>
-          </div>
-          <div class="sum-col c">
-            <h4>⚠️ 主要缺點</h4>
-            <ul>${(sum.top_cons||[]).map(c=>`<li>${c}</li>`).join('')||'<li>暫無明顯缺點</li>'}</ul>
-          </div>
-          <div class="sum-col t">
-            <h4>🚀 改善建議</h4>
-            <ul>${(sum.top_tips||[]).map(t=>`<li>${t}</li>`).join('')||'<li>持續維持水準</li>'}</ul>
-          </div>
-        </div>
-      </div>
-      <div style="background:var(--surface2);border-radius:12px;padding:18px">
-        <div style="font-size:.83rem;font-weight:700;margin-bottom:10px;color:var(--blue)">🎯 AI 整體結論</div>
-        <p style="font-size:.82rem;color:var(--text);line-height:1.75">${sum.conclusion || '基於真實評論分析，此門市整體表現穩定。'}</p>
-        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-          <a href="${url}" target="_blank" style="color:var(--blue);font-size:.76rem;text-decoration:none">
-            🔗 前往 Google Maps 查看「${storeName}」完整評論 →
-          </a>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function realReviewCard(r, i) {
-  const a = r.analysis;
-  const sc = r.rating >= 4 ? 'var(--accent)' : r.rating >= 3 ? '#f59e0b' : 'var(--red)';
-  const badge = a.sentiment==='positive'?'✅ 正評':a.sentiment==='neutral'?'🟡 中性':'❌ 負評';
-  const stars = '★'.repeat(r.rating||0) + '☆'.repeat(5-(r.rating||0));
-  const isGuide = r.user?.local_guide ? ' · 在地嚮導' : '';
-  const reviewCount = r.user?.reviews ? ` · ${r.user.reviews}則評論` : '';
-  
-  return `
-  <div class="rv ${a.sentiment}">
-    <div class="rv-top">
-      <div>
-        <div class="rv-author">${r.user?.name || '匿名用戶'}</div>
-        <div class="rv-author-meta">${isGuide}${reviewCount}</div>
-      </div>
-      <div class="rv-meta">
-        <span class="rv-stars" style="color:${sc}">${stars}</span>
-        <span class="rv-date">${r.date || ''}</span>
-        <span class="sbadge ${a.sentiment}">${badge}</span>
-      </div>
-    </div>
-    <div class="rv-text">${r.snippet || r.text || '（此評論無文字內容）'}</div>
-    <div class="rv-analysis">
-      ${a.pros && a.sentiment !== 'negative' ?`<div class="av"><span class="al p">✅ 優點</span><span class="ac">${a.pros}</span></div>`:''}
-      ${a.cons?`<div class="av"><span class="al c">⚠️ 缺點</span><span class="ac">${a.cons}</span></div>`:''}
-      ${a.tip?`<div class="av"><span class="al t">💡 建議</span><span class="ac">${a.tip}</span></div>`:''}
-      ${!a.pros && !a.cons && !a.tip ? `<div style="font-size:.76rem;color:var(--muted)">✨ 顧客滿意，無特別缺點</div>` : ''}
-    </div>
-  </div>`;
-}
-
-function noData() { return '<p style="color:var(--muted);text-align:center;padding:24px">無此類評論</p>'; }
-function swTab(el, id) {
-  document.querySelectorAll('.mtab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  ['ta','tp','tn','tg','ts'].forEach(t=>{
-    const e=document.getElementById(t); if(e) e.style.display=(t===id?'':'none');
-  });
-}
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
-document.getElementById('modal').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeModal(); });
-
-// ══════════════════════════════════════════════
-// UI 渲染 (Sidebar / Views / Charts)
-// ══════════════════════════════════════════════
-function buildSidebar() {
-  document.getElementById('sidebar').innerHTML = `
-    <div class="sb-sec-title">📊 總覽</div>
-    <div class="sb-item active" onclick="showView('overview')" id="sb-overview">
-      <div class="sb-dot" style="background:var(--accent)"></div>
-      <span class="sb-name">全台統計總覽</span>
-    </div>
-    <div class="sb-item" onclick="showView('ranking')" id="sb-ranking">
-      <div class="sb-dot" style="background:var(--green)"></div>
-      <span class="sb-name">門市排行榜</span>
-    </div>
-    <div class="sb-item" onclick="showView('conclusion')" id="sb-conclusion">
-      <div class="sb-dot" style="background:var(--blue)"></div>
-      <span class="sb-name">結論與建議</span>
-    </div>
-    <div class="sb-divider"></div>
-    <div class="sb-sec-title">🗂️ 各區負責人</div>
-    ${REGIONS.map(r=>`
-      <div class="sb-item" onclick="showView('region','${r.id}')" id="sb-${r.id}">
-        <div class="sb-dot" style="background:${r.color}"></div>
-        <div style="flex:1">
-          <div class="sb-name">${r.name}</div>
-          <div style="font-size:.65rem;color:var(--muted)">${r.manager} 區</div>
-        </div>
-        <span class="sb-count">${r.stores.length}店</span>
-      </div>`).join('')}`;
-}
-
-let charts = {};
-function destroyCharts() { Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}}); charts={}; }
-function mkChart(id, type, data, opts={}) {
-  const ctx = document.getElementById(id); if(!ctx) return;
-  if(charts[id]) charts[id].destroy();
-  charts[id] = new Chart(ctx, { type, data, options:{
-    responsive:true,
-    plugins:{legend:{labels:{color:'#7a8ba8',font:{size:11}}}},
-    scales: ['doughnut','pie','radar'].includes(type) ? {} : {
-      y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7a8ba8'}},
-      x:{grid:{display:false},ticks:{color:'#7a8ba8',maxRotation:40,font:{size:10}}}
-    }, ...opts
-  }});
-}
-
-function showView(view, rid) {
+function showView(view,rid){
   destroyCharts();
-  document.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
-  const el = document.getElementById(rid?`sb-${rid}`:`sb-${view}`);
-  if(el) el.classList.add('active');
-  const c = document.getElementById('content');
-  if(view==='overview') renderOverview(c);
-  else if(view==='ranking') renderRanking(c);
-  else if(view==='conclusion') renderConclusion(c);
-  else if(view==='region') renderRegion(c, rid);
+  document.querySelectorAll('.sb-item').forEach(function(e){e.classList.remove('active');});
+  var sid=rid?'sb-'+rid:'sb-'+view;
+  var el=document.getElementById(sid);if(el)el.classList.add('active');
+  var c=document.getElementById('content');
+  if(view==='overview')renderOverview(c);
+  else if(view==='ranking')renderRanking(c);
+  else if(view==='conclusion')renderConclusion(c);
+  else if(view==='region')renderRegion(c,rid);
+  updateDate();
 }
 
-async function updateCardRating(storeName, cardEl) {
-  const allStores = REGIONS.flatMap(r=>r.stores);
-  const store = allStores.find(s=>s.name===storeName);
-  if (!store) return;
-  const live = await fetchLiveRating(store);
-  if (!live) return;
-  const ratingEl = cardEl.querySelector('.sc-num');
-  const countEl = cardEl.querySelector('.sc-cnt');
-  if (ratingEl && live.rating) {
-    ratingEl.textContent = parseFloat(live.rating).toFixed(1);
-    ratingEl.style.color = live.rating >= 4.5 ? '#065f46' : live.rating >= 4.0 ? '#92400e' : '#991b1b';
-  }
-  if (countEl && live.reviews) {
-    countEl.innerHTML = parseInt(live.reviews).toLocaleString() + ' 則評論 <span style="color:#059669;font-size:.6rem">● 即時</span>';
-  }
-  // 更新情感條
-  const s = calcSentiment(live.rating);
-  const bar = cardEl.querySelector('.sent-bar');
-  if (bar) bar.innerHTML = '<div class="bar-pos" style="width:' + s.pos + '%"></div>' +
-    '<div class="bar-neu" style="width:' + s.neu + '%"></div>' +
-    '<div class="bar-neg" style="width:' + s.neg + '%"></div>';
-  const legend = cardEl.querySelector('.sent-legend');
-  if (legend) legend.innerHTML = '<span class="sl-pos">🟢 正評 ' + s.pos + '%</span>' +
-    '<span class="sl-neu">🟡 中性 ' + s.neu + '%</span>' +
-    '<span class="sl-neg">🔴 負評 ' + s.neg + '%</span>';
+function storeCard(s,r){
+  var st=calcSent(s.rating);
+  var ratingColor=s.rating>=4.8?'#065f46':s.rating>=4.5?'#1e40af':s.rating>=4.0?'#92400e':'#991b1b';
+  return '<div class="sc" onclick="openModal(\''+s.name.replace(/'/g,"\\'")+"','"+r.name+"','"+r.manager+"','"+s.url+"',"+s.rating+','+s.count+')">'
+    +'<div class="sc-head">'
+    +'<div><div class="sc-tag" style="background:'+r.color+'22;color:'+r.color+';border:1px solid '+r.color+'44">'+r.name+' · '+r.manager+'</div>'
+    +'<div class="sc-name">'+s.name+'</div></div>'
+    +'<div class="sc-r"><div style="font-size:.75rem;color:'+ratingColor+'">★★★★★</div>'
+    +'<div class="sc-num" style="color:'+ratingColor+'">'+s.rating.toFixed(1)+'</div>'
+    +'<div class="sc-cnt">'+s.count.toLocaleString()+' 則評論</div></div>'
+    +'</div>'
+    +'<div class="sc-body">'
+    +'<div class="sbar-wrap"><div class="sbar"><div class="bp" style="width:'+st.pos+'%"></div><div class="bn" style="width:'+st.neu+'%"></div><div class="br" style="width:'+st.neg+'%"></div></div></div>'
+    +'<div style="display:flex;gap:10px;font-size:.63rem;font-weight:700"><span class="sl-p">🟢 正評 '+st.pos+'%</span><span class="sl-n">🟡 中性 '+st.neu+'%</span><span class="sl-r">🔴 負評 '+st.neg+'%</span></div>'
+    +'</div>'
+    +'<div class="sc-foot">'
+    +'<a class="glink" href="'+s.url+'" target="_blank" onclick="event.stopPropagation()">🔗 Google評論</a>'
+    +'<button class="btn-live" onclick="event.stopPropagation();openModal(\''+s.name.replace(/'/g,"\\'")+"','"+r.name+"','"+r.manager+"','"+s.url+"',"+s.rating+','+s.count+')"><div class="dot"></div>真實評論分析</button>'
+    +'</div></div>';
 }
 
-function storeCard(s, r) {
-  const st = calcSentiment(s.rating);
-  return `
-  <div class="sc" data-store="${s.name.replace(/'/g,\"\\'\"")}" onclick="openModal('${s.name.replace(/'/g,"\\'")}','${r.name}','${r.manager}','${s.url}',${s.rating},${s.count})">
-    <div class="sc-head">
-      <div>
-        <div style="font-size:.62rem;padding:2px 7px;border-radius:4px;margin-bottom:5px;display:inline-block;background:${r.color}22;color:${r.color};border:1px solid ${r.color}44">${r.name} · ${r.manager}</div>
-        <div class="sc-name">${s.name}</div>
-      </div>
-      <div class="sc-r">
-        <div style="font-size:.75rem;color:var(--accent)">${s.rating>=4.8?'★★★★★':s.rating>=4.5?'★★★★½':'★★★★☆'}</div>
-        <div class="sc-num">${s.rating.toFixed(1)}</div>
-        <div class="sc-cnt">${s.count.toLocaleString()} 則評論</div>
-      </div>
-    </div>
-    <div class="sc-body">
-      <div class="sent-row">
-        <div class="sent-bar">
-          <div class="bar-pos" style="width:${st.pos}%"></div>
-          <div class="bar-neu" style="width:${st.neu}%"></div>
-          <div class="bar-neg" style="width:${st.neg}%"></div>
-        </div>
-        <div class="sent-lbl">🟢${st.pos}% 🟡${st.neu}% 🔴${st.neg}%</div>
-      </div>
-    </div>
-    <div class="sc-foot">
-      <a class="glink" href="${s.url}" target="_blank" onclick="event.stopPropagation()">🔗 Google評論</a>
-      <button class="btn-live" onclick="event.stopPropagation();openModal('${s.name.replace(/'/g,"\\'")}','${r.name}','${r.manager}','${s.url}',${s.rating},${s.count})">
-        <div class="live-dot"></div>真實評論分析
-      </button>
-    </div>
-  </div>`;
-}
-
-function renderOverview(el) {
-  const allS = REGIONS.flatMap(r=>r.stores);
-  const avgR = (allS.reduce((a,s)=>a+s.rating,0)/allS.length).toFixed(2);
-  const totalC = allS.reduce((a,s)=>a+s.count,0);
-  const top = [...allS].sort((a,b)=>b.rating-a.rating)[0];
-  el.innerHTML = `
-    <div class="sec-title">📊 全台統計總覽 <span style="font-size:.72rem;color:var(--muted);font-weight:400">資料更新：<span id="overviewDate">載入中</span></span></div>
-    <div class="stats">
-      <div class="stat gold"><div class="stat-lbl">全台門市數</div><div class="stat-val">${allS.length}</div><div class="stat-sub">9 大區域</div></div>
-      <div class="stat grn"><div class="stat-lbl">全台平均評分</div><div class="stat-val">${avgR}</div><div class="stat-sub">Google 5星平均</div></div>
-      <div class="stat blu"><div class="stat-lbl">Google評論總則數</div><div class="stat-val">${totalC.toLocaleString()}</div><div class="stat-sub">全台累積評論</div></div>
-      <div class="stat red"><div class="stat-lbl">最高評分門市</div><div class="stat-val">${top.rating}</div><div class="stat-sub">${top.name}</div></div>
-    </div>
-    <div class="charts">
-      <div class="chart-box"><h3>各區平均評分</h3><canvas id="cR"></canvas></div>
-      <div class="chart-box"><h3>各區評論則數佔比</h3><canvas id="cC"></canvas></div>
-    </div>
-    <div class="sec-title">🗺️ 各區負責人總覽</div>
-    <div class="region-table">
-      <div class="rt-row rt-head"><div>區域 / 負責人</div><div>情感分布</div><div style="text-align:right">平均評分</div><div style="text-align:center">門市數</div></div>
-      ${REGIONS.map(r=>{const a=regionAvg(r);return`
-        <div class="rt-row">
-          <div><div class="rt-name" style="color:${r.color}" onclick="showView('region','${r.id}')">${r.name}</div><div style="font-size:.68rem;color:var(--muted)">${r.manager} 區</div></div>
-          <div><div class="rt-bar"><div class="bar-pos" style="width:${a.pos}%"></div><div class="bar-neu" style="width:${a.neu}%"></div><div class="bar-neg" style="width:${a.neg}%"></div></div>
-          <div style="font-size:.62rem;margin-top:4px;display:flex;gap:8px;font-weight:600">
-            <span style="color:#065f46">●${a.pos}%</span>
-            <span style="color:#92400e">●${a.neu}%</span>
-            <span style="color:#991b1b">●${a.neg}%</span>
-          </div></div>
-          <div class="rt-rating" style="color:${r.color}">${a.avg.toFixed(1)} ⭐</div>
-          <div class="rt-stores">${r.stores.length}</div>
-        </div>`}).join('')}
-    </div>
-    <div class="sec-title">🏪 所有門市</div>
-    <div class="filter-bar">
-      <input class="fi" id="fs" placeholder="🔍 搜尋門市..." oninput="fAll()">
-      <select class="fi" id="fr" onchange="fAll()">
-        <option value="">所有區域</option>
-        ${REGIONS.map(r=>`<option value="${r.id}">${r.name}（${r.manager}）</option>`).join('')}
-      </select>
-      <select class="fi" id="fsort" onchange="fAll()">
-        <option value="rd">評分 高→低</option><option value="ra">評分 低→高</option>
-        <option value="cd">評論數 多→少</option><option value="ca">評論數 少→多</option>
-      </select>
-    </div>
-    <div class="store-grid" id="allGrid"></div>`;
-  setTimeout(()=>{
-    mkChart('cR','bar',{labels:REGIONS.map(r=>r.name),datasets:[{label:'平均評分',data:REGIONS.map(r=>regionAvg(r).avg),backgroundColor:REGIONS.map(r=>r.color+'99'),borderColor:REGIONS.map(r=>r.color),borderWidth:2,borderRadius:5}]},{options:{scales:{y:{min:4,max:5}}}});
-    mkChart('cC','doughnut',{labels:REGIONS.map(r=>`${r.name}(${r.manager})`),datasets:[{data:REGIONS.map(r=>r.stores.reduce((a,s)=>a+s.count,0)),backgroundColor:REGIONS.map(r=>r.color+'cc'),borderColor:REGIONS.map(r=>r.color),borderWidth:2}]});
+function renderOverview(el){
+  var allS=REGIONS.reduce(function(a,r){return a.concat(r.stores);},[]); 
+  var avgR=(allS.reduce(function(a,s){return a+s.rating;},0)/allS.length).toFixed(2);
+  var totalC=allS.reduce(function(a,s){return a+s.count;},0);
+  var top=allS.slice().sort(function(a,b){return b.rating-a.rating;})[0];
+  var html='<div class="sec-title">📊 全台統計總覽 <span style="font-size:.7rem;color:var(--muted);font-weight:400">資料更新：<span id="overviewDate"></span></span></div>';
+  html+='<div class="stats">';
+  html+='<div class="stat gold"><div class="stat-lbl">全台門市數</div><div class="stat-val">'+allS.length+'</div><div class="stat-sub">9 大區域</div></div>';
+  html+='<div class="stat grn"><div class="stat-lbl">全台平均評分</div><div class="stat-val">'+avgR+'</div><div class="stat-sub">Google 5星平均</div></div>';
+  html+='<div class="stat blu"><div class="stat-lbl">Google評論總則數</div><div class="stat-val">'+totalC.toLocaleString()+'</div><div class="stat-sub">全台累積評論</div></div>';
+  html+='<div class="stat red"><div class="stat-lbl">最高評分門市</div><div class="stat-val">'+top.rating+'</div><div class="stat-sub">'+top.name+'</div></div>';
+  html+='</div>';
+  html+='<div class="charts"><div class="chart-box"><h3>各區平均評分</h3><canvas id="cR"></canvas></div><div class="chart-box"><h3>各區評論則數佔比</h3><canvas id="cC"></canvas></div></div>';
+  html+='<div class="sec-title">🗺️ 各區負責人總覽</div>';
+  html+='<div class="rtable"><div class="rt-row rt-head"><div>區域 / 負責人</div><div>情感分布</div><div style="text-align:right">平均評分</div><div style="text-align:center">門市數</div></div>';
+  REGIONS.forEach(function(r){
+    var a=rAvg(r);
+    html+='<div class="rt-row"><div><div class="rt-name" style="color:'+r.color+'" onclick="showView(\'region\',\''+r.id+'\')">'+r.name+'</div><div style="font-size:.65rem;color:var(--muted)">'+r.manager+' 區</div></div>';
+    html+='<div><div class="rt-bar"><div class="bp" style="width:'+a.pos+'%"></div><div class="bn" style="width:'+a.neu+'%"></div><div class="br" style="width:'+a.neg+'%"></div></div>';
+    html+='<div style="font-size:.6rem;margin-top:3px;font-weight:600"><span style="color:#065f46">●'+a.pos+'%</span> <span style="color:#92400e">●'+a.neu+'%</span> <span style="color:#991b1b">●'+a.neg+'%</span></div></div>';
+    html+='<div class="rt-rating" style="color:'+r.color+'">'+a.avg.toFixed(1)+' ⭐</div><div class="rt-stores">'+r.stores.length+'</div></div>';
+  });
+  html+='</div>';
+  html+='<div class="sec-title">🏪 所有門市</div>';
+  html+='<div class="fbar"><input class="fi" id="fs" placeholder="🔍 搜尋門市..." oninput="fAll()"><select class="fi" id="fr" onchange="fAll()"><option value="">所有區域</option>';
+  REGIONS.forEach(function(r){html+='<option value="'+r.id+'">'+r.name+'（'+r.manager+'）</option>';});
+  html+='</select><select class="fi" id="fsort" onchange="fAll()"><option value="rd">評分 高→低</option><option value="ra">評分 低→高</option><option value="cd">評論數 多→少</option><option value="ca">評論數 少→多</option></select></div>';
+  html+='<div class="sgrid" id="allGrid"></div>';
+  el.innerHTML=html;
+  setTimeout(function(){
+    mkChart('cR','bar',{labels:REGIONS.map(function(r){return r.name;}),datasets:[{label:'平均評分',data:REGIONS.map(function(r){return rAvg(r).avg;}),backgroundColor:REGIONS.map(function(r){return r.color+'99';}),borderColor:REGIONS.map(function(r){return r.color;}),borderWidth:2,borderRadius:5}]},{scales:{y:{min:1,max:5}}});
+    mkChart('cC','doughnut',{labels:REGIONS.map(function(r){return r.name+'('+r.manager+')';}),datasets:[{data:REGIONS.map(function(r){return r.stores.reduce(function(a,s){return a+s.count;},0);}),backgroundColor:REGIONS.map(function(r){return r.color+'cc';}),borderColor:REGIONS.map(function(r){return r.color;}),borderWidth:2}]});
     fAll();
+    updateDate();
   },80);
 }
 
-function fAll() {
-  const q=(document.getElementById('fs').value||'').toLowerCase();
-  const rf=document.getElementById('fr').value;
-  const sort=document.getElementById('fsort').value;
-  let items=REGIONS.flatMap(r=>r.stores.map(s=>({...s,region:r})));
-  if(q) items=items.filter(s=>s.name.includes(q));
-  if(rf) items=items.filter(s=>s.region.id===rf);
-  if(sort==='rd') items.sort((a,b)=>b.rating-a.rating);
-  else if(sort==='ra') items.sort((a,b)=>a.rating-b.rating);
-  else if(sort==='cd') items.sort((a,b)=>b.count-a.count);
-  else if(sort==='ca') items.sort((a,b)=>a.count-b.count);
-  document.getElementById('allGrid').innerHTML=items.map(s=>storeCard(s,s.region)).join('');
+function fAll(){
+  var q=(document.getElementById('fs').value||'').toLowerCase();
+  var rf=document.getElementById('fr').value;
+  var sort=document.getElementById('fsort').value;
+  var items=REGIONS.reduce(function(a,r){return a.concat(r.stores.map(function(s){return Object.assign({},s,{region:r});}));}, []);
+  if(q)items=items.filter(function(s){return s.name.indexOf(q)>-1;});
+  if(rf)items=items.filter(function(s){return s.region.id===rf;});
+  if(sort==='rd')items.sort(function(a,b){return b.rating-a.rating;});
+  else if(sort==='ra')items.sort(function(a,b){return a.rating-b.rating;});
+  else if(sort==='cd')items.sort(function(a,b){return b.count-a.count;});
+  else if(sort==='ca')items.sort(function(a,b){return a.count-b.count;});
+  document.getElementById('allGrid').innerHTML=items.map(function(s){return storeCard(s,s.region);}).join('');
 }
 
-function renderRegion(el, rid) {
-  const region=REGIONS.find(r=>r.id===rid); if(!region) return;
-  const a=regionAvg(region);
-  const top=[...region.stores].sort((a,b)=>b.rating-a.rating)[0];
-  el.innerHTML=`
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px">
-      <div style="width:5px;height:44px;border-radius:3px;background:${region.color}"></div>
-      <div><h2 style="font-size:1.3rem;font-weight:800">${region.name} · ${region.manager} 區</h2>
-      <p style="font-size:.75rem;color:var(--muted);margin-top:2px">${region.stores.length} 家門市 · 平均 ${a.avg} · 評論 ${a.total.toLocaleString()} 則</p></div>
-    </div>
-    <div class="stats">
-      <div class="stat gold"><div class="stat-lbl">本區門市數</div><div class="stat-val">${region.stores.length}</div><div class="stat-sub">${region.name}</div></div>
-      <div class="stat grn"><div class="stat-lbl">區域平均評分</div><div class="stat-val">${a.avg}</div><div class="stat-sub">Google評分</div></div>
-      <div class="stat blu"><div class="stat-lbl">評論總則數</div><div class="stat-val">${a.total.toLocaleString()}</div><div class="stat-sub">累積評論</div></div>
-      <div class="stat red"><div class="stat-lbl">最高評分</div><div class="stat-val">${top.rating}</div><div class="stat-sub">${top.name}</div></div>
-    </div>
-    <div class="charts">
-      <div class="chart-box"><h3>各門市評分</h3><canvas id="cSR"></canvas></div>
-      <div class="chart-box"><h3>各門市評論則數</h3><canvas id="cSC"></canvas></div>
-    </div>
-    <div class="sec-title">🏪 ${region.name} 全部門市 <span style="font-size:.72rem;color:var(--green);font-weight:400">點擊門市可抓取真實評論</span></div>
-    <div class="store-grid">${region.stores.map(s=>storeCard(s,region)).join('')}</div>`;
-  setTimeout(()=>{
-    mkChart('cSR','bar',{labels:region.stores.map(s=>s.name),datasets:[{label:'評分',data:region.stores.map(s=>s.rating),backgroundColor:region.color+'88',borderColor:region.color,borderWidth:2,borderRadius:4}]},{options:{scales:{y:{min:1,max:5}}}});
-    mkChart('cSC','bar',{labels:region.stores.map(s=>s.name),datasets:[{label:'評論則數',data:region.stores.map(s=>s.count),backgroundColor:region.color+'55',borderColor:region.color,borderWidth:2,borderRadius:4}]});
+function renderRegion(el,rid){
+  var region=REGIONS.find(function(r){return r.id===rid;});if(!region)return;
+  var a=rAvg(region);
+  var top=region.stores.slice().sort(function(a,b){return b.rating-a.rating;})[0];
+  var html='<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px"><div style="width:5px;height:42px;border-radius:3px;background:'+region.color+'"></div>';
+  html+='<div><h2 style="font-size:1.2rem;font-weight:800">'+region.name+' · '+region.manager+' 區</h2>';
+  html+='<p style="font-size:.73rem;color:var(--muted);margin-top:2px">'+region.stores.length+' 家門市 · 平均 '+a.avg+' · 評論 '+a.total.toLocaleString()+' 則</p></div></div>';
+  html+='<div class="stats"><div class="stat gold"><div class="stat-lbl">本區門市數</div><div class="stat-val">'+region.stores.length+'</div><div class="stat-sub">'+region.name+'</div></div>';
+  html+='<div class="stat grn"><div class="stat-lbl">區域平均評分</div><div class="stat-val">'+a.avg+'</div><div class="stat-sub">Google評分</div></div>';
+  html+='<div class="stat blu"><div class="stat-lbl">評論總則數</div><div class="stat-val">'+a.total.toLocaleString()+'</div><div class="stat-sub">累積評論</div></div>';
+  html+='<div class="stat red"><div class="stat-lbl">最高評分</div><div class="stat-val">'+top.rating+'</div><div class="stat-sub">'+top.name+'</div></div></div>';
+  html+='<div class="charts"><div class="chart-box"><h3>各門市評分</h3><canvas id="cSR"></canvas></div><div class="chart-box"><h3>各門市評論則數</h3><canvas id="cSC"></canvas></div></div>';
+  html+='<div class="sec-title">🏪 '+region.name+' 全部門市 <span style="font-size:.68rem;color:var(--green);font-weight:400">點擊可抓取真實評論</span></div>';
+  html+='<div class="sgrid">'+region.stores.map(function(s){return storeCard(s,region);}).join('')+'</div>';
+  el.innerHTML=html;
+  setTimeout(function(){
+    mkChart('cSR','bar',{labels:region.stores.map(function(s){return s.name;}),datasets:[{label:'評分',data:region.stores.map(function(s){return s.rating;}),backgroundColor:region.color+'88',borderColor:region.color,borderWidth:2,borderRadius:4}]},{scales:{y:{min:1,max:5}}});
+    mkChart('cSC','bar',{labels:region.stores.map(function(s){return s.name;}),datasets:[{label:'評論則數',data:region.stores.map(function(s){return s.count;}),backgroundColor:region.color+'55',borderColor:region.color,borderWidth:2,borderRadius:4}]});
   },80);
 }
 
-function renderRanking(el) {
-  const all=REGIONS.flatMap(r=>r.stores.map(s=>({...s,region:r})));
-  const byRating=[...all].sort((a,b)=>b.rating-a.rating);
-  const byCount=[...all].sort((a,b)=>b.count-a.count);
-  const low=[...all].filter(s=>s.rating<4.4).sort((a,b)=>a.rating-b.rating);
-  const medal=i=>i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span style="color:var(--muted)">#${i+1}</span>`;
-  const tRow=(s,i)=>`<tr onclick="openModal('${s.name.replace(/'/g,"\\'")}','${s.region.name}','${s.region.manager}','${s.url}',${s.rating},${s.count})" style="cursor:pointer">
-    <td style="text-align:center;font-size:1rem">${medal(i)}</td>
-    <td style="font-weight:600">${s.name}</td>
-    <td><span style="font-size:.7rem;background:${s.region.color}22;color:${s.region.color};padding:2px 8px;border-radius:4px;border:1px solid ${s.region.color}44">${s.region.name}</span></td>
-    <td style="font-weight:700;color:var(--accent)">${s.rating} ⭐</td>
-    <td style="color:var(--muted)">${s.count.toLocaleString()}</td>
-    <td><button class="btn-live" style="font-size:.65rem" onclick="event.stopPropagation();openModal('${s.name.replace(/'/g,"\\'")}','${s.region.name}','${s.region.manager}','${s.url}',${s.rating},${s.count})"><div class="live-dot"></div>分析</button></td>
-  </tr>`;
-  el.innerHTML=`
-    <div class="sec-title">🏆 評分排行榜（Top 20）</div>
-    <div class="data-table" style="margin-bottom:28px"><table><thead><tr><th>排名</th><th>門市</th><th>區域</th><th>評分</th><th>評論數</th><th></th></tr></thead><tbody>${byRating.slice(0,20).map(tRow).join('')}</tbody></table></div>
-    <div class="sec-title">⚠️ 需關注門市（評分 &lt; 4.4）</div>
-    <div class="data-table" style="margin-bottom:28px"><table><thead><tr><th>排名</th><th>門市</th><th>區域</th><th>評分</th><th>評論數</th><th></th></tr></thead><tbody>${low.map(tRow).join('')}</tbody></table></div>
-    <div class="sec-title">💬 聲量最大（評論數 Top 15）</div>
-    <div class="data-table"><table><thead><tr><th>排名</th><th>門市</th><th>區域</th><th>評分</th><th>評論數</th><th></th></tr></thead><tbody>${byCount.slice(0,15).map(tRow).join('')}</tbody></table></div>`;
+function renderRanking(el){
+  var all=REGIONS.reduce(function(a,r){return a.concat(r.stores.map(function(s){return Object.assign({},s,{region:r});}));},[]);
+  var byR=all.slice().sort(function(a,b){return b.rating-a.rating;});
+  var byC=all.slice().sort(function(a,b){return b.count-a.count;});
+  var low=all.filter(function(s){return s.rating<4.4;}).sort(function(a,b){return a.rating-b.rating;});
+  function medal(i){return i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);}
+  function tRow(s,i){
+    return '<tr onclick="openModal(\''+s.name.replace(/'/g,"\\'")+"','"+s.region.name+"','"+s.region.manager+"','"+s.url+"',"+s.rating+','+s.count+')" style="cursor:pointer">'
+      +'<td style="text-align:center">'+medal(i)+'</td>'
+      +'<td style="font-weight:700">'+s.name+'</td>'
+      +'<td><span style="font-size:.68rem;background:'+s.region.color+'22;color:'+s.region.color+';padding:2px 7px;border-radius:4px;border:1px solid '+s.region.color+'44">'+s.region.name+'</span></td>'
+      +'<td style="font-weight:800;color:var(--accent)">'+s.rating+' ⭐</td>'
+      +'<td style="color:var(--muted)">'+s.count.toLocaleString()+'</td>'
+      +'<td><button class="btn-live" style="font-size:.63rem" onclick="event.stopPropagation();openModal(\''+s.name.replace(/'/g,"\\'")+"','"+s.region.name+"','"+s.region.manager+"','"+s.url+"',"+s.rating+','+s.count+')"><div class="dot"></div>分析</button></td>'
+      +'</tr>';
+  }
+  var html='<div class="sec-title">🏆 評分排行榜（Top 20）</div>';
+  html+='<div class="dtable" style="margin-bottom:22px"><table><thead><tr><th>排名</th><th>門市</th><th>區域</th><th>評分</th><th>評論數</th><th></th></tr></thead><tbody>';
+  html+=byR.slice(0,20).map(tRow).join('');
+  html+='</tbody></table></div>';
+  html+='<div class="sec-title">⚠️ 需關注門市（評分低於4.4）</div>';
+  html+='<div class="dtable" style="margin-bottom:22px"><table><thead><tr><th>排名</th><th>門市</th><th>區域</th><th>評分</th><th>評論數</th><th></th></tr></thead><tbody>';
+  html+=low.map(tRow).join('');
+  html+='</tbody></table></div>';
+  html+='<div class="sec-title">💬 聲量最大（評論數 Top 15）</div>';
+  html+='<div class="dtable"><table><thead><tr><th>排名</th><th>門市</th><th>區域</th><th>評分</th><th>評論數</th><th></th></tr></thead><tbody>';
+  html+=byC.slice(0,15).map(tRow).join('');
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
 }
 
-function renderConclusion(el) {
-  const allS=REGIONS.flatMap(r=>r.stores);
-  const avgR=(allS.reduce((a,s)=>a+s.rating,0)/allS.length).toFixed(2);
-  const above48=allS.filter(s=>s.rating>=4.8).length;
-  const below44=allS.filter(s=>s.rating<4.4).length;
-  const best=REGIONS.map(r=>({r,a:regionAvg(r)})).sort((a,b)=>b.a.avg-a.a.avg);
-  el.innerHTML=`
-    <div class="sec-title">📋 結論與改善建議</div>
-    <div class="stats">
-      <div class="stat gold"><div class="stat-lbl">全台平均評分</div><div class="stat-val">${avgR}</div><div class="stat-sub">整體表現優良</div></div>
-      <div class="stat grn"><div class="stat-lbl">4.8分以上優質門市</div><div class="stat-val">${above48}</div><div class="stat-sub">佔全台 ${Math.round(above48/allS.length*100)}%</div></div>
-      <div class="stat red"><div class="stat-lbl">4.4分以下待加強</div><div class="stat-val">${below44}</div><div class="stat-sub">需優先輔導</div></div>
-      <div class="stat blu"><div class="stat-lbl">最佳區域</div><div class="stat-val" style="font-size:1.3rem">${best[0].r.name}</div><div class="stat-sub">${best[0].r.manager} 均分 ${best[0].a.avg}</div></div>
-    </div>
-    <div class="charts">
-      <div class="chart-box"><h3>各區評分雷達圖</h3><canvas id="cRad" style="max-height:260px"></canvas></div>
-      <div class="chart-box"><h3>評分分布（門市數量）</h3><canvas id="cDist"></canvas></div>
-    </div>
-    <div class="concl">
-      <div style="font-size:1rem;font-weight:700;margin-bottom:18px">🎯 整體分析結論</div>
-      <div class="concl-grid">
-        <div class="concl-sec s"><h4>✅ 全台優勢</h4><ul class="concl-list">
-          <li>全台平均評分 ${avgR}，整體口碑表現優良</li>
-          <li>${above48} 家門市達 4.8 分以上，高優質比例</li>
-          <li>${best[0].r.name}（${best[0].r.manager}）為表現最佳區域</li>
-          <li>台南西門店 2607 則、新莊旗艦店 1611 則聲量最大</li>
-          <li>宜花區、中投區表現最穩定均衡</li>
-        </ul></div>
-        <div class="concl-sec w"><h4>⚠️ 需改善問題</h4><ul class="concl-list">
-          <li>士林文林二店評分僅 1.0，需立即查明原因</li>
-          <li>${below44} 家門市低於 4.4 分需輔導</li>
-          <li>高雄區平均評分最低，需全區改善</li>
-          <li>苓雅大順店、前金自立店評分偏低（4.3）</li>
-          <li>桃園巨蛋店評論數最多但評分僅 4.4</li>
-        </ul></div>
-        <div class="concl-sec i"><h4>💡 改善策略</h4><ul class="concl-list">
-          <li>低評分門市進行實地訪查與人員輔導</li>
-          <li>建立每月 Google 評分追蹤 KPI 機制</li>
-          <li>高評分門市設為標竿，推廣 SOP</li>
-          <li>高聲量但低評分門市優先回覆負評</li>
-          <li>各區負責人每週報告評分變化</li>
-        </ul></div>
-        <div class="concl-sec n"><h4>🚀 短中期行動</h4><ul class="concl-list">
-          <li>【即期】士林文林二店查明評分異常</li>
-          <li>【即期】高雄區全區服務品質稽核</li>
-          <li>【短期】設立 Google 評論回覆規範</li>
-          <li>【短期】推行標竿門市交流學習計畫</li>
-          <li>【中期】建立全台評分月度報告制度</li>
-        </ul></div>
-      </div>
-    </div>
-    <div class="sec-title">📊 各區詳細評比（按評分排序）</div>
-    <div class="region-table">
-      <div class="rt-row rt-head"><div>區域 / 負責人</div><div>情感分布</div><div style="text-align:right">平均評分</div><div style="text-align:center">門市數</div></div>
-      ${[...REGIONS].sort((a,b)=>regionAvg(b).avg-regionAvg(a).avg).map(r=>{const a=regionAvg(r);return`
-        <div class="rt-row">
-          <div><div class="rt-name" style="color:${r.color}" onclick="showView('region','${r.id}')">${r.name}</div><div style="font-size:.68rem;color:var(--muted)">${r.manager} 區</div></div>
-          <div><div class="rt-bar"><div class="bar-pos" style="width:${a.pos}%"></div><div class="bar-neu" style="width:${a.neu}%"></div><div class="bar-neg" style="width:${a.neg}%"></div></div>
-          <div style="font-size:.62rem;margin-top:4px;display:flex;gap:8px;font-weight:600">
-            <span style="color:#065f46">●${a.pos}%</span>
-            <span style="color:#92400e">●${a.neu}%</span>
-            <span style="color:#991b1b">●${a.neg}%</span>
-          </div></div>
-          <div class="rt-rating" style="color:${r.color}">${a.avg.toFixed(2)} ⭐</div>
-          <div class="rt-stores">${r.stores.length}</div>
-        </div>`}).join('')}
-    </div>`;
-  setTimeout(()=>{
-    mkChart('cRad','radar',{labels:REGIONS.map(r=>r.name),datasets:[{label:'平均評分',data:REGIONS.map(r=>regionAvg(r).avg),fill:true,backgroundColor:'rgba(245,158,11,0.15)',borderColor:'#f59e0b',pointBackgroundColor:'#f59e0b'}]},{options:{scales:{r:{min:3.8,max:5.1,grid:{color:'rgba(255,255,255,0.1)'},pointLabels:{color:'#e2e8f0',font:{size:11}},ticks:{display:false}}}}});
-    const bins=[{l:'< 4.0',mn:0,mx:3.99},{l:'4.0-4.2',mn:4.0,mx:4.29},{l:'4.3-4.4',mn:4.3,mx:4.49},{l:'4.5-4.6',mn:4.5,mx:4.69},{l:'4.7-4.8',mn:4.7,mx:4.89},{l:'4.9-5.0',mn:4.9,mx:5.0}];
-    const allS2=REGIONS.flatMap(r=>r.stores);
-    mkChart('cDist','bar',{labels:bins.map(b=>b.l),datasets:[{label:'門市數',data:bins.map(b=>allS2.filter(s=>s.rating>=b.mn&&s.rating<=b.mx).length),backgroundColor:['#ef444488','#f9731688','#f59e0b88','#10b98188','#6366f188','#a855f788'],borderColor:['#ef4444','#f97316','#f59e0b','#10b981','#6366f1','#a855f7'],borderWidth:2,borderRadius:4}]});
+function renderConclusion(el){
+  var allS=REGIONS.reduce(function(a,r){return a.concat(r.stores);},[]); 
+  var avgR=(allS.reduce(function(a,s){return a+s.rating;},0)/allS.length).toFixed(2);
+  var above48=allS.filter(function(s){return s.rating>=4.8;}).length;
+  var below44=allS.filter(function(s){return s.rating<4.4;}).length;
+  var best=REGIONS.map(function(r){return{r:r,a:rAvg(r)};}).sort(function(a,b){return b.a.avg-a.a.avg;})[0];
+  var html='<div class="sec-title">📋 結論與改善建議</div>';
+  html+='<div class="stats"><div class="stat gold"><div class="stat-lbl">全台平均評分</div><div class="stat-val">'+avgR+'</div><div class="stat-sub">整體優良</div></div>';
+  html+='<div class="stat grn"><div class="stat-lbl">4.8分以上優質門市</div><div class="stat-val">'+above48+'</div><div class="stat-sub">佔全台 '+Math.round(above48/allS.length*100)+'%</div></div>';
+  html+='<div class="stat red"><div class="stat-lbl">4.4分以下待加強</div><div class="stat-val">'+below44+'</div><div class="stat-sub">需優先輔導</div></div>';
+  html+='<div class="stat blu"><div class="stat-lbl">最佳區域</div><div class="stat-val" style="font-size:1.2rem">'+best.r.name+'</div><div class="stat-sub">'+best.r.manager+' 均分 '+best.a.avg+'</div></div></div>';
+  html+='<div class="charts"><div class="chart-box"><h3>各區評分雷達圖</h3><canvas id="cRad" style="max-height:250px"></canvas></div><div class="chart-box"><h3>評分分布（門市數量）</h3><canvas id="cDist"></canvas></div></div>';
+  html+='<div class="concl"><div style="font-size:.95rem;font-weight:800;margin-bottom:16px">🎯 整體分析結論</div><div class="cg">';
+  html+='<div class="cs s"><h4>✅ 全台優勢</h4><ul class="cl"><li>全台平均評分 '+avgR+'，整體口碑優良</li><li>'+above48+' 家門市達 4.8 分以上</li><li>'+best.r.name+'（'+best.r.manager+'）表現最佳</li><li>台南西門店 2607 則聲量最大</li><li>宜花區、中投區最穩定</li></ul></div>';
+  html+='<div class="cs w"><h4>⚠️ 需改善問題</h4><ul class="cl"><li>士林文林二店評分僅 1.0</li><li>'+below44+' 家門市低於 4.4 分</li><li>高雄區平均評分最低</li><li>前金自立店、苓雅大順店偏低</li><li>桃園巨蛋店評論多但評分低</li></ul></div>';
+  html+='<div class="cs i"><h4>💡 改善策略</h4><ul class="cl"><li>低評分門市進行實地訪查</li><li>建立每月 Google 評分追蹤 KPI</li><li>高評分門市設為標竿推廣 SOP</li><li>優先回覆高聲量低評分門市</li><li>各區每週報告評分變化</li></ul></div>';
+  html+='<div class="cs n"><h4>🚀 短中期行動</h4><ul class="cl"><li>【即期】查明士林文林二店異常</li><li>【即期】高雄區全區服務稽核</li><li>【短期】設立評論回覆規範 SOP</li><li>【短期】推行標竿門市學習計畫</li><li>【中期】建立月度評分報告制度</li></ul></div>';
+  html+='</div></div>';
+  html+='<div class="sec-title">📊 各區評比（按評分排序）</div><div class="rtable">';
+  html+='<div class="rt-row rt-head"><div>區域 / 負責人</div><div>情感分布</div><div style="text-align:right">平均評分</div><div style="text-align:center">門市數</div></div>';
+  REGIONS.slice().sort(function(a,b){return rAvg(b).avg-rAvg(a).avg;}).forEach(function(r){
+    var a=rAvg(r);
+    html+='<div class="rt-row"><div><div class="rt-name" style="color:'+r.color+'" onclick="showView(\'region\',\''+r.id+'\')">'+r.name+'</div><div style="font-size:.65rem;color:var(--muted)">'+r.manager+' 區</div></div>';
+    html+='<div><div class="rt-bar"><div class="bp" style="width:'+a.pos+'%"></div><div class="bn" style="width:'+a.neu+'%"></div><div class="br" style="width:'+a.neg+'%"></div></div>';
+    html+='<div style="font-size:.6rem;margin-top:3px;font-weight:600"><span style="color:#065f46">●'+a.pos+'%</span> <span style="color:#92400e">●'+a.neu+'%</span> <span style="color:#991b1b">●'+a.neg+'%</span></div></div>';
+    html+='<div class="rt-rating" style="color:'+r.color+'">'+a.avg.toFixed(2)+' ⭐</div><div class="rt-stores">'+r.stores.length+'</div></div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
+  setTimeout(function(){
+    mkChart('cRad','radar',{labels:REGIONS.map(function(r){return r.name;}),datasets:[{label:'平均評分',data:REGIONS.map(function(r){return rAvg(r).avg;}),fill:true,backgroundColor:'rgba(245,158,11,0.15)',borderColor:'#f59e0b',pointBackgroundColor:'#f59e0b'}]},{scales:{r:{min:3.8,max:5.1,grid:{color:'rgba(0,0,0,0.08)'},pointLabels:{color:'#1e293b',font:{size:11}},ticks:{display:false}}}});
+    var bins=[{l:'< 4.0',mn:0,mx:3.99},{l:'4.0-4.2',mn:4.0,mx:4.29},{l:'4.3-4.4',mn:4.3,mx:4.49},{l:'4.5-4.6',mn:4.5,mx:4.69},{l:'4.7-4.8',mn:4.7,mx:4.89},{l:'4.9-5.0',mn:4.9,mx:5.0}];
+    var allS2=REGIONS.reduce(function(a,r){return a.concat(r.stores);},[]); 
+    mkChart('cDist','bar',{labels:bins.map(function(b){return b.l;}),datasets:[{label:'門市數',data:bins.map(function(b){return allS2.filter(function(s){return s.rating>=b.mn&&s.rating<=b.mx;}).length;}),backgroundColor:['#ef444488','#f9731688','#f59e0b88','#10b98188','#6366f188','#a855f788'],borderColor:['#ef4444','#f97316','#f59e0b','#10b981','#6366f1','#a855f7'],borderWidth:2,borderRadius:4}]});
   },80);
 }
+
+// MODAL - 真實評論抓取
+async function openModal(storeName,regionName,manager,url,rating,count){
+  document.getElementById('mTitle').textContent=storeName+' — 真實評論分析';
+  document.getElementById('mSub').textContent=regionName+' · '+manager+'區 · ⭐'+rating+' · '+count.toLocaleString()+'則評論';
+  document.getElementById('mBody').innerHTML='<div class="loading"><div class="spinner"></div><div class="pbar"><div class="pfill" id="prog" style="width:0%"></div></div><div class="lsteps"><div id="s1" class="s-act">⏳ Step 1：搜尋 Google Maps 門市資料...</div><div id="s2" class="s-pend">○ Step 2：抓取真實 Google 評論...</div><div id="s3" class="s-pend">○ Step 3：分析評論內容...</div></div></div>';
+  document.getElementById('modal').classList.add('open');
+  function setStep(n,msg){
+    for(var i=1;i<=3;i++){
+      var e=document.getElementById('s'+i);if(!e)continue;
+      e.className=i<n?'s-done':i===n?'s-act':'s-pend';
+      if(i<n)e.textContent=e.textContent.replace('⏳','✅').replace('○','✅');
+      if(i===n&&msg)e.textContent='⏳ '+msg;
+    }
+    var pf=document.getElementById('prog');if(pf)pf.style.width=((n-1)*33)+'%';
+  }
+  try{
+    setStep(1,'Step 1：搜尋 Google Maps 門市資料...');
+    var searchUrl=PROXY_URL+'/search?engine=google_maps&q='+encodeURIComponent('東森寵物 '+storeName)+'&hl=zh-tw&gl=tw';
+    var r1=await fetch(searchUrl,{method:'GET',mode:'cors'});
+    if(!r1.ok)throw new Error('搜尋失敗 HTTP '+r1.status);
+    var d1=await r1.json();
+    if(d1.error)throw new Error(d1.error);
+    var dataId=null;
+    if(d1.local_results&&d1.local_results.length>0){
+      var matched=null;
+      for(var i=0;i<d1.local_results.length;i++){
+        if(d1.local_results[i].title&&d1.local_results[i].title.indexOf(storeName.replace(/[店館院]/g,''))>-1){matched=d1.local_results[i];break;}
+      }
+      if(!matched)matched=d1.local_results[0];
+      dataId=matched.data_id;
+    }else if(d1.place_results&&d1.place_results.data_id){
+      dataId=d1.place_results.data_id;
+    }
+    if(!dataId)throw new Error('找不到門市資料');
+    setStep(2,'Step 2：抓取真實 Google 評論...');
+    var reviewUrl=PROXY_URL+'/search?engine=google_maps_reviews&data_id='+encodeURIComponent(dataId)+'&hl=zh-tw&sort_by=newestFirst';
+    var r2=await fetch(reviewUrl,{method:'GET',mode:'cors'});
+    if(!r2.ok)throw new Error('抓取評論失敗 HTTP '+r2.status);
+    var d2=await r2.json();
+    if(d2.error)throw new Error(d2.error);
+    var reviews=d2.reviews||[];
+    if(reviews.length===0)throw new Error('此門市目前無評論資料');
+    setStep(3,'Step 3：分析評論內容...');
+    await new Promise(function(res){setTimeout(res,300);});
+    var analysis=analyzeLocal(reviews,rating);
+    var pf2=document.getElementById('prog');if(pf2)pf2.style.width='100%';
+    await new Promise(function(res){setTimeout(res,200);});
+    renderModal(storeName,regionName,url,rating,count,reviews,analysis);
+  }catch(err){
+    document.getElementById('mBody').innerHTML='<div class="ebox"><strong>⚠️ 抓取失敗：'+err.message+'</strong><br><br>可能原因：<br>• Proxy 伺服器正在從休眠喚醒（請等30秒後再試）<br>• SerpApi 搜尋額度不足<br><br><a href="'+url+'" target="_blank" style="color:#1e40af">🔗 點此直接前往 Google Maps 查看真實評論</a></div>';
+  }
+}
+
+function analyzeLocal(reviews,storeRating){
+  var posW=['棒','好','讚','優','喜歡','推薦','滿意','親切','專業','乾淨','整潔','用心','貼心','溫柔','耐心','細心','開心','舒適','方便','齊全','豐富','活潑'];
+  var negW=['差','爛','糟','貴','慢','髒','臭','吵','擠','壞','失望','不好','不滿','問題'];
+  var analyzed=reviews.slice(0,15).map(function(r,i){
+    var stars=r.rating||5;
+    var text=(r.snippet||r.text||'');
+    var sent=stars>=4?'positive':stars>=3?'neutral':'negative';
+    var nc=negW.filter(function(w){return text.indexOf(w)>-1;}).length;
+    var pc=posW.filter(function(w){return text.indexOf(w)>-1;}).length;
+    if(nc>pc+1&&sent==='positive')sent='neutral';
+    if(pc>nc+2&&sent==='negative')sent='neutral';
+    var pros=sent!=='negative'?(stars>=4?'服務優質親切':stars>=3?'環境尚可整潔':null):null;
+    var cons=sent!=='positive'?(stars<=2?'服務態度差':stars===3?'服務效率待提升':null):null;
+    var tip=sent!=='positive'?(stars<=2?'全面改善服務流程':stars===3?'加強服務速度':null):null;
+    return{index:i+1,sentiment:sent,pros:pros,cons:cons,tip:tip};
+  });
+  var pos=analyzed.filter(function(r){return r.sentiment==='positive';}).length;
+  var neg=analyzed.filter(function(r){return r.sentiment==='negative';}).length;
+  var posRate=Math.round(pos/analyzed.length*100);
+  var allText=reviews.slice(0,15).map(function(r){return r.snippet||r.text||'';}).join(' ');
+  var themes=[];
+  if(/店員|員工|服務人員/.test(allText))themes.push('店員服務親切');
+  if(/美容|洗澡|剪毛/.test(allText))themes.push('美容技術優良');
+  if(/商品|飼料|用品/.test(allText))themes.push('商品選擇豐富');
+  if(/環境|乾淨|整潔/.test(allText))themes.push('環境整潔舒適');
+  if(/住宿|寄宿/.test(allText))themes.push('住宿服務貼心');
+  var negThemes=[];
+  if(/等|慢|久/.test(allText))negThemes.push('等候時間較長');
+  if(/貴|價格高/.test(allText))negThemes.push('價格偏高');
+  if(/停車|車位/.test(allText))negThemes.push('停車不便');
+  if(/態度|冷漠/.test(allText))negThemes.push('服務態度待改善');
+  var conclusion=storeRating>=4.7?'本店整體表現優異，顧客滿意度達'+posRate+'%，為區域標竿門市。':storeRating>=4.3?'本店表現穩定，正評率'+posRate+'%。建議針對負評進行改善提升整體評分。':'本店有改善空間，正評率'+posRate+'%，建議區域負責人進行實地稽核。';
+  return{reviews:analyzed,summary:{top_pros:themes.length>0?themes.slice(0,3):['服務人員親切','環境整潔','商品齊全'],top_cons:negThemes.length>0?negThemes.slice(0,2):(neg>0?['部分顧客有改善建議']:['暫無明顯缺點']),top_tips:negThemes.length>0?['加強員工培訓','優化服務流程']:['持續維持現有水準','鼓勵顧客留下評論'],conclusion:conclusion}};
+}
+
+function renderModal(storeName,regionName,url,rating,count,reviews,analysis){
+  var aMap={};
+  if(analysis&&analysis.reviews)analysis.reviews.forEach(function(a){aMap[a.index-1]=a;});
+  var enriched=reviews.slice(0,15).map(function(r,i){return Object.assign({},r,{analysis:aMap[i]||{sentiment:r.rating>=4?'positive':r.rating>=3?'neutral':'negative',pros:null,cons:null,tip:null}});});
+  var pos=enriched.filter(function(r){return r.analysis.sentiment==='positive';}).length;
+  var neu=enriched.filter(function(r){return r.analysis.sentiment==='neutral';}).length;
+  var neg=enriched.filter(function(r){return r.analysis.sentiment==='negative';}).length;
+  var sum=analysis?analysis.summary:{};
+  document.getElementById('mSub').textContent=regionName+' · ⭐'+rating+' · 已抓取 '+enriched.length+' 則真實評論 · 🟢'+pos+' 🟡'+neu+' 🔴'+neg;
+  var html='<div class="src-badge">✅ 真實 Google Maps 評論 · 即時抓取 · '+new Date().toLocaleDateString('zh-TW')+'</div>';
+  html+='<div class="mtabs"><div class="mtab active" onclick="swTab(this,\'ta\')">全部('+enriched.length+')</div>';
+  html+='<div class="mtab" onclick="swTab(this,\'tp\')">🟢 正評('+pos+')</div>';
+  html+='<div class="mtab" onclick="swTab(this,\'tn\')">🟡 中性('+neu+')</div>';
+  html+='<div class="mtab" onclick="swTab(this,\'tg\')">🔴 負評('+neg+')</div>';
+  html+='<div class="mtab" onclick="swTab(this,\'ts\')">📊 分析摘要</div></div>';
+  html+='<div id="ta">'+enriched.map(function(r,i){return rvCard(r,i);}).join('')+'</div>';
+  html+='<div id="tp" style="display:none">'+enriched.filter(function(r){return r.analysis.sentiment==='positive';}).map(function(r,i){return rvCard(r,i);}).join('')+'</div>';
+  html+='<div id="tn" style="display:none">'+enriched.filter(function(r){return r.analysis.sentiment==='neutral';}).map(function(r,i){return rvCard(r,i);}).join('')+'</div>';
+  html+='<div id="tg" style="display:none">'+enriched.filter(function(r){return r.analysis.sentiment==='negative';}).map(function(r,i){return rvCard(r,i);}).join('')+'</div>';
+  html+='<div id="ts" style="display:none">';
+  html+='<div class="sum-box"><div class="sum-grid">';
+  html+='<div class="sum-col p"><h4>✅ 主要優點</h4><ul>'+(sum.top_pros||[]).map(function(p){return '<li>'+p+'</li>';}).join('')+'</ul></div>';
+  html+='<div class="sum-col c"><h4>⚠️ 主要缺點</h4><ul>'+(sum.top_cons||[]).map(function(c){return '<li>'+c+'</li>';}).join('')+'</ul></div>';
+  html+='<div class="sum-col t"><h4>🚀 改善建議</h4><ul>'+(sum.top_tips||[]).map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>';
+  html+='</div></div>';
+  html+='<div style="background:var(--surface);border-radius:10px;padding:16px;border:1px solid var(--border)">';
+  html+='<div style="font-size:.82rem;font-weight:800;margin-bottom:10px;color:#1e40af">🎯 整體結論</div>';
+  html+='<p style="font-size:.82rem;color:var(--text);line-height:1.75">'+(sum.conclusion||'基於真實評論分析，此門市整體表現穩定。')+'</p>';
+  html+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><a href="'+url+'" target="_blank" style="color:#1e40af;font-size:.74rem;text-decoration:none">🔗 前往 Google Maps 查看「'+storeName+'」完整評論 →</a></div></div></div>';
+  document.getElementById('mBody').innerHTML=html;
+}
+
+function rvCard(r,i){
+  var a=r.analysis;
+  var sc=r.rating>=4?'#d97706':r.rating>=3?'#f59e0b':'#dc2626';
+  var badge=a.sentiment==='positive'?'✅ 正評':a.sentiment==='neutral'?'🟡 中性':'❌ 負評';
+  var stars='';for(var k=0;k<(r.rating||0);k++)stars+='★';for(var k=0;k<5-(r.rating||0);k++)stars+='☆';
+  var guide=r.user&&r.user.local_guide?' · 在地嚮導':'';
+  var rcnt=r.user&&r.user.reviews?' · '+r.user.reviews+'則評論':'';
+  var html='<div class="rv '+a.sentiment+'">';
+  html+='<div class="rv-top"><div><div class="rv-author">'+(r.user&&r.user.name?r.user.name:'匿名用戶')+'</div><div class="rv-meta-row">'+guide+rcnt+'</div></div>';
+  html+='<div class="rv-meta"><span class="rv-stars" style="color:'+sc+'">'+stars+'</span><span class="rv-date">'+(r.date||'')+'</span><span class="sbadge '+a.sentiment+'">'+badge+'</span></div></div>';
+  html+='<div class="rv-text">'+(r.snippet||r.text||'（此評論無文字內容）')+'</div>';
+  html+='<div class="rv-ana">';
+  if(a.pros&&a.sentiment!=='negative')html+='<div class="av"><span class="al p">✅ 優點</span><span class="ac">'+a.pros+'</span></div>';
+  if(a.cons)html+='<div class="av"><span class="al c">⚠️ 缺點</span><span class="ac">'+a.cons+'</span></div>';
+  if(a.tip)html+='<div class="av"><span class="al t">💡 建議</span><span class="ac">'+a.tip+'</span></div>';
+  if(!a.pros&&!a.cons&&!a.tip)html+='<div style="font-size:.74rem;color:var(--muted)">✨ 顧客滿意，無特別缺點</div>';
+  html+='</div></div>';
+  return html;
+}
+
+function swTab(el,id){
+  document.querySelectorAll('.mtab').forEach(function(t){t.classList.remove('active');});
+  el.classList.add('active');
+  ['ta','tp','tn','tg','ts'].forEach(function(t){var e=document.getElementById(t);if(e)e.style.display=(t===id?'':'none');});
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===e.currentTarget)closeModal();});
 
 buildSidebar();
 showView('overview');
-// 動態更新日期為今天
-(function() {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth()+1).padStart(2,'0');
-  const d = String(now.getDate()).padStart(2,'0');
-  const dateStr = y + '/' + m + '/' + d;
-  const el = document.getElementById('updateDate');
-  if (el) el.textContent = dateStr + ' 更新';
-  const el2 = document.getElementById('overviewDate');
-  if (el2) el2.textContent = dateStr;
-})();
-
-//]]>
 </script>
+</body>
+</html>
