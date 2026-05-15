@@ -157,6 +157,25 @@ input.fi{flex:1;min-width:180px}
 @media(max-width:1200px){.stats{grid-template-columns:repeat(2,1fr)}.charts{grid-template-columns:1fr}.cg{grid-template-columns:1fr}.sum-grid{grid-template-columns:1fr}}
 @media(max-width:900px){.sidebar{display:none}.content{padding:14px}.sgrid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}.rt-row{grid-template-columns:110px 1fr 65px 45px;gap:7px;padding:9px 12px}.legend{display:none}}
 @media(max-width:600px){.hdr{padding:10px 14px}.hdr-title h1{font-size:.95rem}.stats{grid-template-columns:repeat(2,1fr);gap:9px}.stat{padding:13px}.stat-val{font-size:1.6rem}.sgrid{grid-template-columns:1fr}.modal{width:99%;max-height:96vh}.modal-hdr{padding:14px}.modal-body{padding:12px}.mtab{padding:4px 9px;font-size:.68rem}.fbar{flex-direction:column}input.fi{min-width:unset;width:100%}.cg{grid-template-columns:1fr}}
+/* ── 漢堡選單 ── */
+.hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;
+  gap:5px;width:36px;height:36px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);
+  border-radius:8px;cursor:pointer;padding:0}
+.hamburger span{display:block;width:18px;height:2px;background:#fff;border-radius:2px;transition:all .3s}
+.hamburger.active span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.active span:nth-child(2){opacity:0}
+.hamburger.active span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+/* 遮罩 */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:99;backdrop-filter:blur(2px)}
+.sidebar-overlay.open{display:block}
+/* RWD 側邊欄滑入 */
+@media(max-width:900px){
+  .hamburger{display:flex}
+  .sidebar{display:block;position:fixed;top:80px;left:-260px;height:calc(100vh - 80px);
+    width:260px;z-index:100;transition:left .3s ease;box-shadow:4px 0 20px rgba(0,0,0,.15)}
+  .sidebar.open{left:0}
+}
+
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 </style>
 </head>
@@ -170,6 +189,9 @@ input.fi{flex:1;min-width:180px}
     </div>
   </div>
   <div class="hdr-r">
+    <button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="選單">
+      <span></span><span></span><span></span>
+    </button>
     <div class="legend">
       <span><div class="ld" style="background:#10b981"></div>正評（4-5星）</span>
       <span style="color:rgba(255,255,255,.3)">|</span>
@@ -180,6 +202,7 @@ input.fi{flex:1;min-width:180px}
     <div class="badge"><div class="dot"></div>LIVE 真實評論</div>
   </div>
 </div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 <div class="layout">
   <div class="sidebar" id="sidebar"></div>
   <div class="content" id="content"></div>
@@ -373,6 +396,27 @@ function updateDate(){
 }
 
 // Sidebar
+function toggleSidebar(){
+  var sb=document.getElementById('sidebar');
+  var overlay=document.getElementById('sidebarOverlay');
+  var btn=document.getElementById('hamburger');
+  sb.classList.toggle('open');
+  overlay.classList.toggle('open');
+  btn.classList.toggle('active');
+}
+
+// 點選側邊欄項目後自動關閉（手機版）
+function closeSidebarOnMobile(){
+  if(window.innerWidth<=900){
+    var sb=document.getElementById('sidebar');
+    var overlay=document.getElementById('sidebarOverlay');
+    var btn=document.getElementById('hamburger');
+    sb.classList.remove('open');
+    overlay.classList.remove('open');
+    btn.classList.remove('active');
+  }
+}
+
 function buildSidebar(){
   var html='<div class="sb-sec">📊 總覽</div>';
   html+='<div class="sb-item active" onclick="showView(\'overview\')" id="sb-overview"><div class="sb-dot" style="background:var(--accent)"></div><span class="sb-name">全台統計總覽</span></div>';
@@ -395,6 +439,7 @@ function mkChart(id,type,data,opts){
 }
 
 function showView(view,rid){
+  closeSidebarOnMobile();
   destroyCharts();
   document.querySelectorAll('.sb-item').forEach(function(e){e.classList.remove('active');});
   var sid=rid?'sb-'+rid:'sb-'+view;
