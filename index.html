@@ -835,142 +835,81 @@ function loadRegionSummary(region){
   html+='</ul></div>';
 
   html+='</div>';
-  // ── 關鍵字區塊 ──
-  html += '<div id="kwblock-'+region.id+'" style="margin-top:16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.06)">';
-  html += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
-  html += '<div>';
-  html += '<div style="font-size:.8rem;font-weight:800;color:#1e293b">🔑 評論關鍵字分析</div>';
-  html += '<div style="font-size:.65rem;color:#64748b;margin-top:2px">正評：評論數最多3店 · 負評：評分最低3店 · 來源：Google Maps 真實評論</div>';
-  html += '</div>';
-  html += '<button id="kwbtn-'+region.id+'" data-rid="'+region.id+'" onclick="fetchKeywords(this,this.dataset.rid)" style="font-size:.72rem;background:linear-gradient(135deg,#059669,#047857);border:none;color:#fff;padding:6px 14px;border-radius:7px;cursor:pointer;font-weight:700">即時抓取關鍵字</button>';
-  html += '</div>';
-  html += '<div id="kwresult-'+region.id+'"><div style="font-size:.78rem;color:#94a3b8;text-align:center;padding:4px 0">點擊按鈕分析本區評論關鍵字</div></div>';
-  html += '</div>';
+  // ── 關鍵字區塊（靜態預設）──
+  var kd = REGION_KW[region.id] || {posHtml:'',negHtml:'',posSrc:'',negSrc:''};
+  html += '<div style="margin-top:16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.06)">';
+  html += '<div style="font-size:.8rem;font-weight:800;color:#1e293b;margin-bottom:4px">🔑 評論關鍵字分析</div>';
+  html += '<div style="font-size:.65rem;color:#64748b;margin-bottom:14px">正評：評論數最多3店 · 負評：評分最低3店 · 資料依最新更新為準</div>';
+  html += '<div style="display:flex;flex-direction:column;gap:13px">';
+  html += '<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">';
+  html += '<span style="font-size:.72rem;font-weight:800;color:#065f46;white-space:nowrap;padding-top:5px;min-width:70px">🟢 正評關鍵字</span>';
+  html += '<div style="flex:1"><div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:5px">'+kd.posHtml+'</div>';
+  html += '<div style="font-size:.63rem;color:#94a3b8">分析來源（評論數最多）：'+kd.posSrc+'</div></div></div>';
+  html += '<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">';
+  html += '<span style="font-size:.72rem;font-weight:800;color:#991b1b;white-space:nowrap;padding-top:5px;min-width:70px">🔴 負評關鍵字</span>';
+  html += '<div style="flex:1"><div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:5px">'+kd.negHtml+'</div>';
+  html += '<div style="font-size:.63rem;color:#94a3b8">分析來源（評分最低）：'+kd.negSrc+'</div></div></div>';
+  html += '</div></div>';
 
   el.innerHTML = html;
 }
 
-// ── 關鍵字詞庫 ──
-var POS_DICT = ['親切','專業','乾淨','整潔','用心','貼心','推薦','滿意','開心','舒適','齊全','豐富','友善','耐心','細心','溫柔','方便','優質','棒','讚','好','熱心','愉快','舒服','完善','安心','放心','衛生','新鮮','活潑','可愛','溫暖','有效','便利','快速','準時'];
-var NEG_DICT = ['等候','態度','昂貴','髒亂','擁擠','不滿','失望','問題','臭味','噪音','停車','貴','慢','差','爛','冷漠','粗魯','敷衍','雜亂','危險','過期','病弱','死亡','噪音','擁擠','狹小','昏暗'];
-
-function extractKw(text, dict) {
-  var result = [];
-  dict.forEach(function(w) {
-    if (text.indexOf(w) > -1) result.push(w);
-  });
-  // 去重、字數1-6
-  var seen = {}, out = [];
-  result.forEach(function(w) {
-    if (!seen[w] && w.length >= 1 && w.length <= 6) { seen[w]=true; out.push(w); }
-  });
-  return out;
-}
-
-function fetchKeywords(btn, regionId) {
-  var result = document.getElementById('kwresult-'+regionId);
-  if (!result) return;
-  btn.disabled = true;
-  btn.textContent = '抓取中...';
-  result.innerHTML = '<div style="font-size:.78rem;color:#64748b;text-align:center;padding:8px">正在抓取評論資料，請稍候...</div>';
-
-  var region = REGIONS.find(function(r){ return r.id === regionId; });
-  if (!region) { result.innerHTML = '找不到區域'; return; }
-
-  // 正評來源：評論數最多3間
-  var posStores = region.stores.slice().sort(function(a,b){ return b.count - a.count; }).slice(0,3);
-  // 負評來源：評分最低3間
-  var negStores = region.stores.slice().sort(function(a,b){ return a.rating - b.rating; }).slice(0,3);
-
-  var posTexts = [], negTexts = [];
-  var total = posStores.length + negStores.length;
-  var done = 0;
-
-  function checkDone() {
-    done++;
-    if (done >= total) {
-      var posKw = extractKw(posTexts.join(' '), POS_DICT).slice(0,5);
-      var negKw = extractKw(negTexts.join(' '), NEG_DICT).slice(0,5);
-      if (posKw.length === 0) posKw = ['服務'];
-      if (negKw.length === 0) negKw = ['等候'];
-      showKeywords(regionId, posKw, negKw, posStores, negStores, btn);
-    }
-  }
-
-  function fetchReviews(store, onDone) {
-    var url1 = PROXY_URL + '/search?engine=google_maps&q=' + encodeURIComponent('東森寵物 ' + store.name) + '&hl=zh-tw&gl=tw';
-    fetch(url1, {method:'GET', mode:'cors'})
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        var dataId = null;
-        if (d.local_results && d.local_results.length > 0) {
-          var m = d.local_results.find(function(r){ return r.title && r.title.indexOf(store.name.replace(/[店館院]/g,'')) > -1; }) || d.local_results[0];
-          dataId = m.data_id;
-        } else if (d.place_results && d.place_results.data_id) {
-          dataId = d.place_results.data_id;
-        }
-        if (!dataId) throw new Error('no id');
-        var url2 = PROXY_URL + '/search?engine=google_maps_reviews&data_id=' + encodeURIComponent(dataId) + '&hl=zh-tw&sort_by=newestFirst';
-        return fetch(url2, {method:'GET', mode:'cors'}).then(function(r){ return r.json(); });
-      })
-      .then(function(d){ onDone(d.reviews || []); })
-      .catch(function(){ onDone([]); });
-  }
-
-  posStores.forEach(function(store){
-    fetchReviews(store, function(reviews){
-      var txt = reviews.filter(function(r){ return (r.rating||0) >= 4; }).map(function(r){ return r.snippet||r.text||''; }).join(' ');
-      posTexts.push(txt);
-      checkDone();
-    });
-  });
-
-  negStores.forEach(function(store){
-    fetchReviews(store, function(reviews){
-      var txt = reviews.filter(function(r){ return (r.rating||0) <= 2; }).map(function(r){ return r.snippet||r.text||''; }).join(' ');
-      negTexts.push(txt);
-      checkDone();
-    });
-  });
-}
-
-function showKeywords(regionId, posKw, negKw, posStores, negStores, btn) {
-  var result = document.getElementById('kwresult-'+regionId);
-  if (!result) return;
-
-  var posTagsHtml = '';
-  posKw.forEach(function(kw){
-    posTagsHtml += '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">' + kw + '</span>';
-  });
-
-  var negTagsHtml = '';
-  negKw.forEach(function(kw){
-    negTagsHtml += '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">' + kw + '</span>';
-  });
-
-  var posNames = posStores.map(function(s){ return s.name; }).join('、');
-  var negNames = negStores.map(function(s){ return s.name+'('+s.rating+')'; }).join('、');
-
-  var html = '<div style="display:flex;flex-direction:column;gap:14px">';
-
-  html += '<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">';
-  html += '<span style="font-size:.72rem;font-weight:800;color:#065f46;white-space:nowrap;padding-top:5px;min-width:70px">🟢 正評關鍵字</span>';
-  html += '<div style="flex:1">';
-  html += '<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:5px">' + posTagsHtml + '</div>';
-  html += '<div style="font-size:.65rem;color:#94a3b8">分析來源（評論數最多）：' + posNames + '</div>';
-  html += '</div></div>';
-
-  html += '<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">';
-  html += '<span style="font-size:.72rem;font-weight:800;color:#991b1b;white-space:nowrap;padding-top:5px;min-width:70px">🔴 負評關鍵字</span>';
-  html += '<div style="flex:1">';
-  html += '<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:5px">' + negTagsHtml + '</div>';
-  html += '<div style="font-size:.65rem;color:#94a3b8">分析來源（評分最低）：' + negNames + '</div>';
-  html += '</div></div>';
-
-  html += '</div>';
-  result.innerHTML = html;
-  if (btn) { btn.disabled = false; btn.textContent = '重新抓取'; }
-}
+var REGION_KW = {
+  'r1': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">乾淨</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">專業</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">用心</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">態度</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">停車</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">昂貴</span>',
+    posSrc: '士林文林(貓館)、桃園巨蛋店、龜山復興店',
+    negSrc: '士林文林二店(1.0)、龜山復興店(4.2)、桃園巨蛋店(4.4)'
+  },
+  'r2': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">整潔</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">專業</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">方便</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">停車</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">昂貴</span>',
+    posSrc: '新莊旗艦店、土城中華店、三重三和店',
+    negSrc: '土城中華店(4.4)、三重三和店(4.5)、三重中正北店(4.5)'
+  },
+  'r3': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">專業</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">用心</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">整潔</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">停車</span>',
+    posSrc: '苗栗縣府店、新竹經國店、北港民享店',
+    negSrc: '苗栗縣府店(4.5)、新竹經國店(4.5)、竹北成功店(4.5)'
+  },
+  'r4': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">用心</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">整潔</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">貼心</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span>',
+    posSrc: '羅東光榮店、宜蘭新生店、吉安自強店',
+    negSrc: '花蓮中正店(4.6)、玉里和平店(4.6)、羅東光榮店(4.7)'
+  },
+  'r5': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">專業</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">整潔</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">用心</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">停車</span>',
+    posSrc: '台中青海店、台中澄清店、台中東海店',
+    negSrc: '台中中清店(4.6)、台中沙鹿店(4.6)、台中東海店(4.6)'
+  },
+  'r6': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">整潔</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">用心</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">方便</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">昂貴</span>',
+    posSrc: '北港民享店、員林三民東店、嘉義北港店',
+    negSrc: '麥寮中興店(4.3)、溪湖彰水店(4.5)、北港民享店(4.5)'
+  },
+  'r7': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">專業</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">整潔</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">用心</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">停車</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">擁擠</span>',
+    posSrc: '台南西門店、安南海佃店、台南永康店',
+    negSrc: '善化光復店(4.4)、安南海佃店(4.4)、安平建平店(4.4)'
+  },
+  'r8': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">整潔</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">方便</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">用心</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">態度</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">停車</span>',
+    posSrc: '前鎮瑞隆店、楠梓興楠店、鳳山青年店',
+    negSrc: '前金自立店(4.3)、前鎮瑞隆店(4.4)、楠梓藍昌店(4.4)'
+  },
+  'r9': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">用心</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">整潔</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">方便</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">停車</span>',
+    posSrc: '屏東自由店、內埔學人店、東港中正店',
+    negSrc: '苓雅大順店(4.3)、屏東自由店(4.4)、東港中正店(4.5)'
+  },
+};
 
 
 
@@ -1265,20 +1204,83 @@ function renderRanking(el){
   html+='<div class="dtable"><table><thead><tr><th>排名</th><th>門市</th><th>區域</th><th>評分</th><th>評論數</th><th></th></tr></thead><tbody>';
   html+=byC.slice(0,15).map(tRow).join('');
   html+='</tbody></table></div>';
-  // ── 關鍵字區塊 ──
-  html += '<div id="kwblock-'+region.id+'" style="margin-top:16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.06)">';
-  html += '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
-  html += '<div>';
-  html += '<div style="font-size:.8rem;font-weight:800;color:#1e293b">🔑 評論關鍵字分析</div>';
-  html += '<div style="font-size:.65rem;color:#64748b;margin-top:2px">正評：評論數最多3店 · 負評：評分最低3店 · 來源：Google Maps 真實評論</div>';
-  html += '</div>';
-  html += '<button id="kwbtn-'+region.id+'" data-rid="'+region.id+'" onclick="fetchKeywords(this,this.dataset.rid)" style="font-size:.72rem;background:linear-gradient(135deg,#059669,#047857);border:none;color:#fff;padding:6px 14px;border-radius:7px;cursor:pointer;font-weight:700">即時抓取關鍵字</button>';
-  html += '</div>';
-  html += '<div id="kwresult-'+region.id+'"><div style="font-size:.78rem;color:#94a3b8;text-align:center;padding:4px 0">點擊按鈕分析本區評論關鍵字</div></div>';
-  html += '</div>';
+  // ── 關鍵字區塊（靜態預設）──
+  var kd = REGION_KW[region.id] || {posHtml:'',negHtml:'',posSrc:'',negSrc:''};
+  html += '<div style="margin-top:16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.06)">';
+  html += '<div style="font-size:.8rem;font-weight:800;color:#1e293b;margin-bottom:4px">🔑 評論關鍵字分析</div>';
+  html += '<div style="font-size:.65rem;color:#64748b;margin-bottom:14px">正評：評論數最多3店 · 負評：評分最低3店 · 資料依最新更新為準</div>';
+  html += '<div style="display:flex;flex-direction:column;gap:13px">';
+  html += '<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">';
+  html += '<span style="font-size:.72rem;font-weight:800;color:#065f46;white-space:nowrap;padding-top:5px;min-width:70px">🟢 正評關鍵字</span>';
+  html += '<div style="flex:1"><div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:5px">'+kd.posHtml+'</div>';
+  html += '<div style="font-size:.63rem;color:#94a3b8">分析來源（評論數最多）：'+kd.posSrc+'</div></div></div>';
+  html += '<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">';
+  html += '<span style="font-size:.72rem;font-weight:800;color:#991b1b;white-space:nowrap;padding-top:5px;min-width:70px">🔴 負評關鍵字</span>';
+  html += '<div style="flex:1"><div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:5px">'+kd.negHtml+'</div>';
+  html += '<div style="font-size:.63rem;color:#94a3b8">分析來源（評分最低）：'+kd.negSrc+'</div></div></div>';
+  html += '</div></div>';
 
   el.innerHTML = html;
 }
+
+var REGION_KW = {
+  'r1': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">乾淨</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">專業</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">用心</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">態度</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">停車</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">昂貴</span>',
+    posSrc: '士林文林(貓館)、桃園巨蛋店、龜山復興店',
+    negSrc: '士林文林二店(1.0)、龜山復興店(4.2)、桃園巨蛋店(4.4)'
+  },
+  'r2': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">整潔</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">專業</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">方便</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">停車</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">昂貴</span>',
+    posSrc: '新莊旗艦店、土城中華店、三重三和店',
+    negSrc: '土城中華店(4.4)、三重三和店(4.5)、三重中正北店(4.5)'
+  },
+  'r3': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">專業</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">用心</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">整潔</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">停車</span>',
+    posSrc: '苗栗縣府店、新竹經國店、北港民享店',
+    negSrc: '苗栗縣府店(4.5)、新竹經國店(4.5)、竹北成功店(4.5)'
+  },
+  'r4': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">用心</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">整潔</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">貼心</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span>',
+    posSrc: '羅東光榮店、宜蘭新生店、吉安自強店',
+    negSrc: '花蓮中正店(4.6)、玉里和平店(4.6)、羅東光榮店(4.7)'
+  },
+  'r5': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">專業</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">整潔</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">用心</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">停車</span>',
+    posSrc: '台中青海店、台中澄清店、台中東海店',
+    negSrc: '台中中清店(4.6)、台中沙鹿店(4.6)、台中東海店(4.6)'
+  },
+  'r6': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">整潔</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">用心</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">方便</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">昂貴</span>',
+    posSrc: '北港民享店、員林三民東店、嘉義北港店',
+    negSrc: '麥寮中興店(4.3)、溪湖彰水店(4.5)、北港民享店(4.5)'
+  },
+  'r7': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">專業</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">整潔</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">用心</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">停車</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">擁擠</span>',
+    posSrc: '台南西門店、安南海佃店、台南永康店',
+    negSrc: '善化光復店(4.4)、安南海佃店(4.4)、安平建平店(4.4)'
+  },
+  'r8': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">整潔</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">方便</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">用心</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">態度</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">停車</span>',
+    posSrc: '前鎮瑞隆店、楠梓興楠店、鳳山青年店',
+    negSrc: '前金自立店(4.3)、前鎮瑞隆店(4.4)、楠梓藍昌店(4.4)'
+  },
+  'r9': {
+    posHtml: '<span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">親切</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">用心</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">整潔</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">推薦</span><span style="background:#dcfce7;color:#065f46;border:1.5px solid #86efac;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">方便</span>',
+    negHtml: '<span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">等候</span><span style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:20px;padding:4px 13px;font-size:.8rem;font-weight:700">停車</span>',
+    posSrc: '屏東自由店、內埔學人店、東港中正店',
+    negSrc: '苓雅大順店(4.3)、屏東自由店(4.4)、東港中正店(4.5)'
+  },
+};
+
+
 
 buildSidebar();
 showView('overview');
