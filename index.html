@@ -364,6 +364,135 @@ function renderStars(rating){
   return s;
 }
 
+var GROWTH_DATA = [
+  {id:'r1',name:'北桃區',manager:'陳岳翔',color:'#f59e0b',stores:[
+    {name:'士林文林(貓館)',r2605:4.7,r2502:4.7,c2605:841,c2502:771,url:'https://share.google/8X8C4RD7xcOq6Rogr',rDiff:0.0,cDiff:70,cPct:9.1},
+    {name:'士林文林二店',r2605:1.0,r2502:0,c2605:5,c2502:0,url:'https://share.google/5oSNScDl4EG4W4zBI',rDiff:1.0,cDiff:5,cPct:0},
+    {name:'北投中和店',r2605:4.5,r2502:4.5,c2605:323,c2502:281,url:'https://share.google/aE8RDpBwxq7Rfsvu7',rDiff:0.0,cDiff:42,cPct:14.9},
+    {name:'大同民族西店',r2605:4.4,r2502:4.6,c2605:40,c2502:29,url:'https://share.google/QSyQpqZH3PEjsOu9h',rDiff:-0.2,cDiff:11,cPct:37.9},
+    {name:'大安通化店',r2605:4.7,r2502:4.8,c2605:245,c2502:219,url:'https://share.google/85HBB0WuCebY8CdDH',rDiff:-0.1,cDiff:26,cPct:11.9},
+    {name:'大安建國南店',r2605:4.7,r2502:4.7,c2605:316,c2502:227,url:'https://share.google/X6LwqmQyzEBzbqyor',rDiff:0.0,cDiff:89,cPct:39.2},
+    {name:'大直北安店',r2605:4.9,r2502:5.0,c2605:478,c2502:477,url:'https://share.google/aRv8Mh1rc1Gw2nVkG',rDiff:-0.1,cDiff:1,cPct:0.2},
+    {name:'龜山自強西店',r2605:4.8,r2502:4.7,c2605:259,c2502:145,url:'https://share.google/cVHFNyUGFWbnGPHpW',rDiff:0.1,cDiff:114,cPct:78.6},
+    {name:'龜山復興店',r2605:4.2,r2502:4.0,c2605:997,c2502:763,url:'https://share.google/GBAhdwtW2jyZJttU4',rDiff:0.2,cDiff:234,cPct:30.7},
+    {name:'桃園巨蛋店',r2605:4.4,r2502:4.3,c2605:1968,c2502:1729,url:'https://share.google/EkdCP6PniVyRzSYjj',rDiff:0.1,cDiff:239,cPct:13.8},
+    {name:'蘆竹大新店',r2605:4.4,r2502:4.6,c2605:173,c2502:132,url:'https://share.google/fatvklp6R0grm9EKI',rDiff:-0.2,cDiff:41,cPct:31.1},
+    {name:'蘆竹南昌店',r2605:4.7,r2502:4.8,c2605:208,c2502:172,url:'https://share.google/FAw8qXisp3OPBfNTE',rDiff:-0.1,cDiff:36,cPct:20.9},
+    {name:'觀音大觀店',r2605:4.5,r2502:4.4,c2605:146,c2502:95,url:'https://share.google/oU1ZskjNhDfeLxjeM',rDiff:0.1,cDiff:51,cPct:53.7},
+    {name:'中壢中央東店',r2605:5.0,r2502:0,c2605:68,c2502:0,url:'https://share.google/Gvv91rFbkElRiSAo9',rDiff:5.0,cDiff:68,cPct:0},
+  ]},
+  {id:'r2',name:'新北區',manager:'陳育廷',color:'#10b981',stores:[
+    {name:'三重三和店',r2605:4.5,r2502:4.5,c2605:516,c2502:458,url:'https://share.google/L2lHWWynohoG2cFU7',rDiff:0.0,cDiff:58,cPct:12.7},
+    {name:'三重中正北店',r2605:4.5,r2502:4.6,c2605:252,c2502:172,url:'https://share.google/LyOiEjNuaKMTGyAbx',rDiff:-0.1,cDiff:80,cPct:46.5},
+    {name:'新莊中正店',r2605:4.8,r2502:4.8,c2605:557,c2502:365,url:'https://share.google/IEOMJRdy8kj0eMC0I',rDiff:0.0,cDiff:192,cPct:52.6},
+    {name:'永和得和店',r2605:4.6,r2502:4.5,c2605:200,c2502:169,url:'https://share.google/ClGZEt8TDfvmAbj50',rDiff:0.1,cDiff:31,cPct:18.3},
+    {name:'土城中華店',r2605:4.4,r2502:4.3,c2605:822,c2502:680,url:'https://share.google/hw6awuyviiqYMhq7Y',rDiff:0.1,cDiff:142,cPct:20.9},
+    {name:'新莊旗艦店',r2605:4.5,r2502:4.4,c2605:1611,c2502:1449,url:'https://share.google/awn1l3RzbffqtJdZj',rDiff:0.1,cDiff:162,cPct:11.2},
+    {name:'板橋雨農店',r2605:4.6,r2502:4.8,c2605:80,c2502:49,url:'https://share.google/yFKr7ZX2G5CueyjK8',rDiff:-0.2,cDiff:31,cPct:63.3},
+    {name:'新北八里店',r2605:5.0,r2502:0,c2605:31,c2502:0,url:'https://share.google/PXfsp6ICEn2gP4tnu',rDiff:5.0,cDiff:31,cPct:0},
+  ]},
+  {id:'r3',name:'竹苗區',manager:'林蓁鈴',color:'#6366f1',stores:[
+    {name:'新竹經國店',r2605:4.5,r2502:4.6,c2605:440,c2502:413,url:'https://share.google/FPWZkxON9qRIOs3nX',rDiff:-0.1,cDiff:27,cPct:6.5},
+    {name:'新竹建興店',r2605:4.6,r2502:4.6,c2605:237,c2502:221,url:'https://share.google/EqI8oo64wk91ctAR6',rDiff:0.0,cDiff:16,cPct:7.2},
+    {name:'竹東長春店',r2605:4.5,r2502:4.5,c2605:161,c2502:156,url:'https://share.google/b4c0VVPGI9lBE2Rif',rDiff:0.0,cDiff:5,cPct:3.2},
+    {name:'湖口中山店',r2605:4.6,r2502:4.5,c2605:250,c2502:201,url:'https://share.google/68bbN4iZKZIjujuto',rDiff:0.1,cDiff:49,cPct:24.4},
+    {name:'竹北中正東店',r2605:4.7,r2502:4.7,c2605:172,c2502:161,url:'https://share.google/iv2ZbzBR0uHZ3QIi6',rDiff:0.0,cDiff:11,cPct:6.8},
+    {name:'竹北成功店',r2605:4.5,r2502:4.6,c2605:188,c2502:145,url:'https://share.google/VIo1WOxfPkKhXkATX',rDiff:-0.1,cDiff:43,cPct:29.7},
+    {name:'頭份中華店',r2605:4.6,r2502:4.5,c2605:357,c2502:323,url:'https://share.google/z1sCR3oyZ66RLieZ8',rDiff:0.1,cDiff:34,cPct:10.5},
+    {name:'竹南延平店',r2605:4.6,r2502:4.6,c2605:230,c2502:204,url:'https://share.google/RKazRp2aELoiBuKCF',rDiff:0.0,cDiff:26,cPct:12.7},
+    {name:'苗栗縣府店',r2605:4.5,r2502:4.6,c2605:577,c2502:530,url:'https://share.google/pSHaL8B3Q2WfLRSjI',rDiff:-0.1,cDiff:47,cPct:8.9},
+    {name:'苑裡中山店',r2605:4.5,r2502:4.6,c2605:261,c2502:229,url:'https://share.google/xj4wHQDN9shkgviLd',rDiff:-0.1,cDiff:32,cPct:14.0},
+  ]},
+  {id:'r4',name:'宜花區',manager:'李宜倢',color:'#06b6d4',stores:[
+    {name:'宜蘭新生店',r2605:4.8,r2502:4.8,c2605:449,c2502:350,url:'https://share.google/1P0D5jXoXvvpcXXAf',rDiff:0.0,cDiff:99,cPct:28.3},
+    {name:'羅東光榮店',r2605:4.7,r2502:4.6,c2605:555,c2502:426,url:'https://share.google/LnDqMC9qguTLwHTSn',rDiff:0.1,cDiff:129,cPct:30.3},
+    {name:'吉安自強店',r2605:4.8,r2502:4.7,c2605:275,c2502:185,url:'https://share.google/m5aJykf5UiG8WNGNL',rDiff:0.1,cDiff:90,cPct:48.6},
+    {name:'花蓮中正店',r2605:4.6,r2502:4.5,c2605:297,c2502:249,url:'https://share.google/qJVxB5DkHFt5A7Xd6',rDiff:0.1,cDiff:48,cPct:19.3},
+    {name:'玉里和平店',r2605:4.6,r2502:4.7,c2605:143,c2502:110,url:'https://share.google/8ojlI8Luptpv78938',rDiff:-0.1,cDiff:33,cPct:30.0},
+    {name:'宜蘭員山店',r2605:4.8,r2502:4.8,c2605:184,c2502:110,url:'https://share.google/4jeFsOG8fhXs9y1Oi',rDiff:0.0,cDiff:74,cPct:67.3},
+    {name:'蘇澳中山店',r2605:4.9,r2502:4.5,c2605:366,c2502:76,url:'https://share.google/NTNKaZVPSc5ha9giH',rDiff:0.4,cDiff:290,cPct:381.6},
+    {name:'羅東林場店',r2605:4.9,r2502:4.9,c2605:156,c2502:50,url:'https://share.google/0vOhKsTYK6ldKqcw8',rDiff:0.0,cDiff:106,cPct:212.0},
+  ]},
+  {id:'r5',name:'中投區',manager:'劉哲維',color:'#ec4899',stores:[
+    {name:'豐原圓環東店',r2605:4.9,r2502:4.8,c2605:369,c2502:227,url:'https://share.google/EPrv0TCKN7FOhmpbM',rDiff:0.1,cDiff:142,cPct:62.6},
+    {name:'北屯后庄北店',r2605:4.7,r2502:4.7,c2605:167,c2502:138,url:'https://share.google/3zDD3FeerSYz8pKEU',rDiff:0.0,cDiff:29,cPct:21.0},
+    {name:'台中中清店',r2605:4.6,r2502:4.6,c2605:492,c2502:449,url:'https://share.google/ynZKKNDZAE0UJV2bm',rDiff:0.0,cDiff:43,cPct:9.6},
+    {name:'台中北屯店',r2605:4.7,r2502:4.7,c2605:477,c2502:418,url:'https://share.google/6pXXzePyFMy3iGMF7',rDiff:0.0,cDiff:59,cPct:14.1},
+    {name:'台中東海店',r2605:4.6,r2502:4.6,c2605:897,c2502:742,url:'https://share.google/Y09r9FGLJ84xoWSvS',rDiff:0.0,cDiff:155,cPct:20.9},
+    {name:'台中沙鹿店',r2605:4.6,r2502:4.5,c2605:678,c2502:484,url:'https://share.google/xu2oCoHRvh5aGLH4i',rDiff:0.1,cDiff:194,cPct:40.1},
+    {name:'台中澄清店',r2605:4.6,r2502:4.5,c2605:1244,c2502:1073,url:'https://share.google/GAezQxkBP4H864g7W',rDiff:0.1,cDiff:171,cPct:15.9},
+    {name:'北屯軍功店',r2605:4.6,r2502:4.6,c2605:180,c2502:127,url:'https://share.google/8Lmf64f8PvCOLaJHL',rDiff:0.0,cDiff:53,cPct:41.7},
+    {name:'台中青海店',r2605:4.8,r2502:4.5,c2605:1119,c2502:498,url:'https://share.google/UhRkcsRXvR8ehWOrN',rDiff:0.3,cDiff:621,cPct:124.7},
+    {name:'大里仁化店',r2605:4.7,r2502:4.6,c2605:276,c2502:169,url:'https://share.google/jckMMOVRTPmo22iLG',rDiff:0.1,cDiff:107,cPct:63.3},
+    {name:'草屯明賢店',r2605:4.7,r2502:4.6,c2605:140,c2502:114,url:'https://share.google/VASjNlzUMsRmm2FO3',rDiff:0.1,cDiff:26,cPct:22.8},
+    {name:'埔里中山店',r2605:4.9,r2502:4.8,c2605:203,c2502:131,url:'https://share.google/wOCtJ9DMFiQdslSqE',rDiff:0.1,cDiff:72,cPct:55.0},
+  ]},
+  {id:'r6',name:'彰雲嘉區',manager:'林晟豐',color:'#f97316',stores:[
+    {name:'員林三民東店',r2605:4.6,r2502:4.6,c2605:554,c2502:471,url:'https://share.google/BsHkgH8Nl6qNNkuHT',rDiff:0.0,cDiff:83,cPct:17.6},
+    {name:'田中福安店',r2605:4.8,r2502:4.7,c2605:280,c2502:222,url:'https://share.google/ZjCR9LEHUjxedVbPI',rDiff:0.1,cDiff:58,cPct:26.1},
+    {name:'溪湖彰水店',r2605:4.5,r2502:4.3,c2605:134,c2502:104,url:'https://share.google/tRKmAqjh90IQLtyBv',rDiff:0.2,cDiff:30,cPct:28.8},
+    {name:'北斗中華店',r2605:4.7,r2502:4.6,c2605:182,c2502:132,url:'https://share.google/NQrPkEt7etv5jP9AF',rDiff:0.1,cDiff:50,cPct:37.9},
+    {name:'彰化中正店',r2605:4.6,r2502:4.6,c2605:385,c2502:332,url:'https://share.google/rwWY2orcs2LKbsdU9',rDiff:0.0,cDiff:53,cPct:16.0},
+    {name:'和美彰美店',r2605:4.7,r2502:4.7,c2605:394,c2502:349,url:'https://share.google/XJN6bSLR2SspscLJ6',rDiff:0.0,cDiff:45,cPct:12.9},
+    {name:'彰化中山店',r2605:4.6,r2502:4.5,c2605:488,c2502:401,url:'https://share.google/oO1gUOBPF3K2SEr7W',rDiff:0.1,cDiff:87,cPct:21.7},
+    {name:'虎尾林森店',r2605:4.6,r2502:4.6,c2605:307,c2502:283,url:'https://share.google/Qr9BmuVBiu8qXurVo',rDiff:0.0,cDiff:24,cPct:8.5},
+    {name:'斗六民生南店',r2605:4.6,r2502:4.5,c2605:436,c2502:348,url:'https://share.google/PHUgBoOblZyZVNg5E',rDiff:0.1,cDiff:88,cPct:25.3},
+    {name:'北港民享店',r2605:4.5,r2502:4.5,c2605:527,c2502:448,url:'https://share.google/Uxo9Kkmn8Ta2oCcQ1',rDiff:0.0,cDiff:79,cPct:17.6},
+    {name:'西螺公正店',r2605:4.6,r2502:4.5,c2605:161,c2502:105,url:'https://share.google/8COpgEwAwLW471x0T',rDiff:0.1,cDiff:56,cPct:53.3},
+    {name:'斗南延平店',r2605:4.6,r2502:4.5,c2605:249,c2502:175,url:'https://share.google/Ui7EYRgyh8x8PZ9pR',rDiff:0.1,cDiff:74,cPct:42.3},
+    {name:'麥寮中興店',r2605:4.3,r2502:4.1,c2605:297,c2502:216,url:'https://share.google/INLNLCv6KfW3qIflG',rDiff:0.2,cDiff:81,cPct:37.5},
+    {name:'嘉義北港店',r2605:4.8,r2502:4.7,c2605:531,c2502:419,url:'https://share.google/l5ZcJERYp00utiSio',rDiff:0.1,cDiff:112,cPct:26.7},
+    {name:'嘉義友愛店',r2605:4.9,r2502:4.8,c2605:443,c2502:243,url:'https://share.google/jr2UfbMhRunoPXKk5',rDiff:0.1,cDiff:200,cPct:82.3},
+    {name:'嘉義吳鳳南店',r2605:4.5,r2502:4.5,c2605:347,c2502:302,url:'https://share.google/u4DUAUWIg8APoBTxp',rDiff:0.0,cDiff:45,cPct:14.9},
+    {name:'嘉義朴子店',r2605:4.9,r2502:0,c2605:59,c2502:0,url:'https://share.google/wK4W8BzZjCtzypKlD',rDiff:4.9,cDiff:59,cPct:0},
+  ]},
+  {id:'r7',name:'台南區',manager:'李景傑',color:'#a855f7',stores:[
+    {name:'新營民生店',r2605:4.8,r2502:4.7,c2605:258,c2502:127,url:'https://share.google/ALIGR2PCl8wsJLz5O',rDiff:0.1,cDiff:131,cPct:103.1},
+    {name:'麻豆興中店',r2605:4.7,r2502:4.4,c2605:208,c2502:83,url:'https://share.google/rB4DhXcqaYWwTvOk4',rDiff:0.3,cDiff:125,cPct:150.6},
+    {name:'善化光復店',r2605:4.4,r2502:4.3,c2605:483,c2502:289,url:'https://share.google/qA4Tcw3ZX4TFB1wPy',rDiff:0.1,cDiff:194,cPct:67.1},
+    {name:'佳里新生店',r2605:4.5,r2502:4.1,c2605:244,c2502:130,url:'https://share.google/Txy4z37GWj7P7dh6c',rDiff:0.4,cDiff:114,cPct:87.7},
+    {name:'安南海佃店',r2605:4.4,r2502:4.3,c2605:1696,c2502:1360,url:'https://share.google/iNokqktE9Hf0VsQF7',rDiff:0.1,cDiff:336,cPct:24.7},
+    {name:'台南永康店',r2605:4.6,r2502:4.5,c2605:549,c2502:484,url:'https://share.google/YUB570WkxWdrqKlzT',rDiff:0.1,cDiff:65,cPct:13.4},
+    {name:'新市中正店',r2605:4.8,r2502:4.5,c2605:416,c2502:158,url:'https://share.google/qFJQOAS5jsu7xT6jO',rDiff:0.3,cDiff:258,cPct:163.3},
+    {name:'永康永大店',r2605:4.6,r2502:4.5,c2605:488,c2502:393,url:'https://share.google/joh3diKVPlpsfOI9N',rDiff:0.1,cDiff:95,cPct:24.2},
+    {name:'台南中華東店',r2605:4.5,r2502:4.4,c2605:687,c2502:570,url:'https://share.google/gersxzZjuPJas7y73',rDiff:0.1,cDiff:117,cPct:20.5},
+    {name:'台南西門店',r2605:4.5,r2502:4.5,c2605:2607,c2502:2328,url:'https://share.google/6LIpH2GgKEpCD3xKq',rDiff:0.0,cDiff:279,cPct:12.0},
+    {name:'仁德中山店',r2605:4.5,r2502:4.2,c2605:441,c2502:258,url:'https://share.google/kusBPC6nu5We7c2Ym',rDiff:0.3,cDiff:183,cPct:70.9},
+    {name:'安平建平店',r2605:4.4,r2502:4.1,c2605:1021,c2502:676,url:'https://share.google/jR1iSoYwJPJ7iKnoI',rDiff:0.3,cDiff:345,cPct:51.0},
+    {name:'台南新興店',r2605:4.7,r2502:4.5,c2605:219,c2502:96,url:'https://share.google/PBUmIi0cvjOoMAfyK',rDiff:0.2,cDiff:123,cPct:128.1},
+    {name:'歸仁中山店',r2605:4.9,r2502:4.7,c2605:244,c2502:72,url:'https://share.google/vuEIfRKMj4TlckZ5m',rDiff:0.2,cDiff:172,cPct:238.9},
+    {name:'關廟南雄店',r2605:4.9,r2502:4.6,c2605:347,c2502:78,url:'https://share.google/vXOnX5q6OrteVt6oi',rDiff:0.3,cDiff:269,cPct:344.9},
+  ]},
+  {id:'r8',name:'高雄區(澎)',manager:'涂綺恬',color:'#ef4444',stores:[
+    {name:'岡山柳橋西店',r2605:4.8,r2502:4.8,c2605:292,c2502:256,url:'https://share.google/RAmKVgX6yZZhUS6J7',rDiff:0.0,cDiff:36,cPct:14.1},
+    {name:'左營左大店',r2605:4.5,r2502:4.5,c2605:204,c2502:179,url:'https://share.google/3xYtJv9jaR1wGDQ6I',rDiff:0.0,cDiff:25,cPct:14.0},
+    {name:'楠梓藍昌店',r2605:4.4,r2502:4.2,c2605:392,c2502:310,url:'https://share.google/xWkcDK4WnTp79fje4',rDiff:0.2,cDiff:82,cPct:26.5},
+    {name:'楠梓興楠店',r2605:4.5,r2502:4.4,c2605:638,c2502:566,url:'https://share.google/PlVjdxzjl9HQxCCnP',rDiff:0.1,cDiff:72,cPct:12.7},
+    {name:'路竹中山店',r2605:4.8,r2502:4.8,c2605:515,c2502:411,url:'https://share.google/RL9JFZOkXvHBkGBLM',rDiff:0.0,cDiff:104,cPct:25.3},
+    {name:'仁武仁雄店',r2605:4.4,r2502:4.2,c2605:297,c2502:214,url:'https://share.google/VrcViPYNxMf0JAJ4V',rDiff:0.2,cDiff:83,cPct:38.8},
+    {name:'小港宏平店',r2605:4.4,r2502:4.5,c2605:470,c2502:442,url:'https://share.google/SOpoIuYLuhNrZPKFt',rDiff:-0.1,cDiff:28,cPct:6.3},
+    {name:'前鎮瑞隆店',r2605:4.4,r2502:4.3,c2605:1283,c2502:958,url:'https://share.google/GvztLPieQ8lCPcKl4',rDiff:0.1,cDiff:325,cPct:33.9},
+    {name:'前金自立店',r2605:4.3,r2502:4.2,c2605:539,c2502:464,url:'https://share.google/NmkMUK1VS7LyeJ07j',rDiff:0.1,cDiff:75,cPct:16.2},
+    {name:'大寮鳳林店',r2605:4.5,r2502:4.3,c2605:507,c2502:362,url:'https://share.google/fO3AehcURw51IlduV',rDiff:0.2,cDiff:145,cPct:40.1},
+    {name:'鳳山青年店',r2605:4.4,r2502:4.4,c2605:599,c2502:447,url:'https://share.google/84ZMVWIBqE8hv4gYN',rDiff:0.0,cDiff:152,cPct:34.0},
+    {name:'高雄林園東店',r2605:4.6,r2502:4.5,c2605:342,c2502:286,url:'https://share.google/6hxrcnFB2H1rivqzU',rDiff:0.1,cDiff:56,cPct:19.6},
+    {name:'小港桂陽店',r2605:4.9,r2502:4.9,c2605:200,c2502:161,url:'https://share.google/2rTKMgtm3g5Bnxy5o',rDiff:0.0,cDiff:39,cPct:24.2},
+    {name:'澎湖馬公店',r2605:4.6,r2502:4.5,c2605:150,c2502:112,url:'https://share.google/ODSGvVwZzd9zRFIuk',rDiff:0.1,cDiff:38,cPct:33.9},
+    {name:'三民十全店',r2605:4.7,r2502:4.6,c2605:150,c2502:123,url:'https://share.google/Qf3GQMCk3DD6XHssn',rDiff:0.1,cDiff:27,cPct:22.0},
+    {name:'前金自強一店',r2605:4.7,r2502:4.5,c2605:140,c2502:84,url:'https://share.google/fiUHgCGRAfAnZXgri',rDiff:0.2,cDiff:56,cPct:66.7},
+  ]},
+  {id:'r9',name:'高屏區(台東)',manager:'鍾宜玲',color:'#14b8a6',stores:[
+    {name:'苓雅大順店',r2605:4.3,r2502:4.2,c2605:732,c2502:641,url:'https://share.google/iHihtJ9Nahsfr6zIV',rDiff:0.1,cDiff:91,cPct:14.2},
+    {name:'屏東自由店',r2605:4.4,r2502:4.3,c2605:1154,c2502:1003,url:'https://share.google/gjl4GJgYBEYWU2D48',rDiff:0.1,cDiff:151,cPct:15.1},
+    {name:'東港中正店',r2605:4.5,r2502:4.5,c2605:444,c2502:414,url:'https://share.google/aA6erC4uREsNoDgKD',rDiff:0.0,cDiff:30,cPct:7.2},
+    {name:'潮州延平店',r2605:4.6,r2502:4.6,c2605:400,c2502:319,url:'https://share.google/Z5XV54TsKsWZKlrA9',rDiff:0.0,cDiff:81,cPct:25.4},
+    {name:'內埔學人店',r2605:4.7,r2502:4.7,c2605:517,c2502:449,url:'https://share.google/P6Gp1rRs8S8lTdEhw',rDiff:0.0,cDiff:68,cPct:15.1},
+    {name:'恆春環城南店',r2605:4.6,r2502:4.6,c2605:425,c2502:342,url:'https://share.google/WTxFhcl0yplXkJCgo',rDiff:0.0,cDiff:83,cPct:24.3},
+    {name:'屏東萬丹店',r2605:4.8,r2502:4.8,c2605:273,c2502:189,url:'https://share.google/Y30ku8FQMKkE6sJvi',rDiff:0.0,cDiff:84,cPct:44.4},
+    {name:'台東更生店',r2605:4.8,r2502:4.8,c2605:255,c2502:226,url:'https://share.google/lGVEZZUIMRunaHl0i',rDiff:0.0,cDiff:29,cPct:12.8},
+  ]},
+];
+
 function calcSent(r){
   // 依評分精確計算情感比例
   var pos,neu,neg;
@@ -421,6 +550,7 @@ function buildSidebar(){
   var html='<div class="sb-sec">📊 總覽</div>';
   html+='<div class="sb-item active" onclick="showView(\'overview\')" id="sb-overview"><div class="sb-dot" style="background:var(--accent)"></div><span class="sb-name">全台統計總覽</span></div>';
   html+='<div class="sb-item" onclick="showView(\'ranking\')" id="sb-ranking"><div class="sb-dot" style="background:var(--green)"></div><span class="sb-name">門市排行榜</span></div>';
+  html+='<div class="sb-item" onclick="showView(\'growth\')" id="sb-growth"><div class="sb-dot" style="background:#0ea5e9"></div><span class="sb-name">📈 評論成長比較</span></div>';
   html+='<div class="sb-item" onclick="showView(\'conclusion\')" id="sb-conclusion"><div class="sb-dot" style="background:var(--blue)"></div><span class="sb-name">結論與建議</span></div>';
   html+='<div class="sb-div"></div><div class="sb-sec">🗂️ 各區負責人</div>';
   REGIONS.forEach(function(r){
@@ -447,6 +577,7 @@ function showView(view,rid){
   var c=document.getElementById('content');
   if(view==='overview')renderOverview(c);
   else if(view==='ranking')renderRanking(c);
+  else if(view==='growth')renderGrowth(c);
   else if(view==='conclusion')renderConclusion(c);
   else if(view==='region')renderRegion(c,rid);
   updateDate();
@@ -648,6 +779,200 @@ function renderRegion(el,rid){
     mkChart('cSC','bar',{labels:region.stores.map(function(s){return s.name;}),datasets:[{label:'評論則數',data:region.stores.map(function(s){return s.count;}),backgroundColor:region.color+'55',borderColor:region.color,borderWidth:2,borderRadius:4}]});
     loadRegionSummary(region);
   },80);
+}
+
+function renderGrowth(el){
+  var t1='2025/02/11', t2='2026/05/14';
+  var allS=GROWTH_DATA.reduce(function(a,r){return a.concat(r.stores.map(function(s){return Object.assign({},s,{region:r});}));}, []);
+  var validS=allS.filter(function(s){return s.c2502>0;});
+  var total2605=allS.reduce(function(a,s){return a+s.c2605;},0);
+  var total2502=allS.reduce(function(a,s){return a+s.c2502;},0);
+  var totalDiff=total2605-total2502;
+  var avgR2605=allS.reduce(function(a,s){return a+s.r2605;},0)/allS.length;
+  var avgR2502=validS.reduce(function(a,s){return a+s.r2502;},0)/validS.length;
+  var rDiff=avgR2605-avgR2502;
+  var newStores=allS.filter(function(s){return s.c2502===0;});
+
+  // 評分變化標籤
+  function rBadge(diff){
+    if(diff>0.15) return '<span style="background:#dcfce7;color:#065f46;font-size:.65rem;padding:2px 8px;border-radius:10px;font-weight:700">▲ +'+diff.toFixed(1)+'</span>';
+    if(diff>0) return '<span style="background:#dcfce7;color:#065f46;font-size:.65rem;padding:2px 8px;border-radius:10px;font-weight:700">▲ +'+diff.toFixed(1)+'</span>';
+    if(diff<0) return '<span style="background:#fee2e2;color:#991b1b;font-size:.65rem;padding:2px 8px;border-radius:10px;font-weight:700">▼ '+diff.toFixed(1)+'</span>';
+    return '<span style="background:#f1f5f9;color:#64748b;font-size:.65rem;padding:2px 8px;border-radius:10px;font-weight:700">－ 持平</span>';
+  }
+  function cBadge(diff,pct){
+    var color=diff>0?'#065f46':'#991b1b';
+    var bg=diff>0?'#dcfce7':'#fee2e2';
+    var arrow=diff>0?'▲':'▼';
+    return '<span style="background:'+bg+';color:'+color+';font-size:.65rem;padding:2px 8px;border-radius:10px;font-weight:700">'+arrow+' +'+diff+'則</span>';
+  }
+
+  var html='';
+  // ── 頁面標題 ──
+  html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px">';
+  html+='<div><div class="sec-title" style="margin-bottom:4px">📈 評論成長比較分析</div>';
+  html+='<div style="font-size:.78rem;color:var(--muted)">比較時段：<strong style="color:#1e40af">'+t1+'</strong> → <strong style="color:#059669">'+t2+'</strong></div></div>';
+  html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+  html+='<button class="fi" onclick="switchGrowthTab(\'all\')" id="gtab-all" style="border-color:#1e40af;color:#1e40af;font-weight:700">🌐 全台比較</button>';
+  GROWTH_DATA.forEach(function(r){
+    html+='<button class="fi" onclick="switchGrowthTab(\''+r.id+'\')" id="gtab-'+r.id+'" style="font-size:.68rem">'+r.name+'</button>';
+  });
+  html+='</div></div>';
+
+  // ── 全台比較 ──
+  html+='<div id="gcontent-all">';
+  // 全台統計卡片
+  html+='<div class="stats">';
+  html+='<div class="stat gold"><div class="stat-lbl">全台評論總數 ('+t2+')</div><div class="stat-val">'+total2605.toLocaleString()+'</div><div class="stat-sub">較 '+t1+' 成長 +'+totalDiff.toLocaleString()+' 則</div></div>';
+  html+='<div class="stat grn"><div class="stat-lbl">評論成長數</div><div class="stat-val">+'+totalDiff.toLocaleString()+'</div><div class="stat-sub">成長率 +'+Math.round(totalDiff/total2502*100)+'%</div></div>';
+  html+='<div class="stat blu"><div class="stat-lbl">平均評分 ('+t2+')</div><div class="stat-val">'+avgR2605.toFixed(2)+'</div><div class="stat-sub">較前期 '+(rDiff>0?'+':'')+rDiff.toFixed(2)+' 分</div></div>';
+  html+='<div class="stat red"><div class="stat-lbl">新增門市數</div><div class="stat-val">'+newStores.length+'</div><div class="stat-sub">本期新開門市</div></div>';
+  html+='</div>';
+
+  // 圖表區
+  html+='<div class="charts">';
+  html+='<div class="chart-box"><h3>各區評論則數比較（'+t1+' vs '+t2+'）</h3><canvas id="gchart1"></canvas></div>';
+  html+='<div class="chart-box"><h3>各區平均評分比較（'+t1+' vs '+t2+'）</h3><canvas id="gchart2"></canvas></div>';
+  html+='</div>';
+
+  // 各區成長排行
+  html+='<div class="sec-title">🏆 各區評論成長排行</div>';
+  html+='<div class="dtable" style="margin-bottom:22px"><table><thead><tr>';
+  html+='<th>排名</th><th>區域</th><th>負責人</th>';
+  html+='<th>'+t1+' 評論數</th><th>'+t2+' 評論數</th>';
+  html+='<th>成長則數</th><th>成長率</th>';
+  html+='<th>'+t1+' 均分</th><th>'+t2+' 均分</th><th>評分變化</th>';
+  html+='</tr></thead><tbody>';
+  var regionStats=GROWTH_DATA.map(function(r){
+    var c2605=r.stores.reduce(function(a,s){return a+s.c2605;},0);
+    var c2502=r.stores.reduce(function(a,s){return a+s.c2502;},0);
+    var vStores=r.stores.filter(function(s){return s.c2502>0;});
+    var avR2605=r.stores.reduce(function(a,s){return a+s.r2605;},0)/r.stores.length;
+    var avR2502=vStores.length>0?vStores.reduce(function(a,s){return a+s.r2502;},0)/vStores.length:0;
+    var cDiff=c2605-c2502; var cPct=c2502>0?Math.round(cDiff/c2502*100):0;
+    var rD=parseFloat((avR2605-avR2502).toFixed(2));
+    return{r:r,c2605:c2605,c2502:c2502,cDiff:cDiff,cPct:cPct,avR2605:avR2605,avR2502:avR2502,rD:rD};
+  }).sort(function(a,b){return b.cPct-a.cPct;});
+  var medal=function(i){return i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);};
+  regionStats.forEach(function(rs,i){
+    html+='<tr>';
+    html+='<td style="text-align:center">'+medal(i)+'</td>';
+    html+='<td><span style="background:'+rs.r.color+'22;color:'+rs.r.color+';padding:2px 8px;border-radius:4px;font-weight:700;font-size:.75rem">'+rs.r.name+'</span></td>';
+    html+='<td style="font-size:.8rem">'+rs.r.manager+'</td>';
+    html+='<td style="text-align:right;color:var(--muted)">'+rs.c2502.toLocaleString()+'</td>';
+    html+='<td style="text-align:right;font-weight:700">'+rs.c2605.toLocaleString()+'</td>';
+    html+='<td style="text-align:right;color:#059669;font-weight:700">+'+rs.cDiff.toLocaleString()+'</td>';
+    html+='<td style="text-align:center">'+cBadge(rs.cDiff,rs.cPct)+' <span style="font-size:.72rem;color:var(--muted)">+'+rs.cPct+'%</span></td>';
+    html+='<td style="text-align:center;color:var(--muted)">'+rs.avR2502.toFixed(2)+'</td>';
+    html+='<td style="text-align:center;font-weight:700;color:#1e40af">'+rs.avR2605.toFixed(2)+'</td>';
+    html+='<td style="text-align:center">'+rBadge(rs.rD)+'</td>';
+    html+='</tr>';
+  });
+  html+='</tbody></table></div>';
+  html+='</div>';
+
+  // ── 各區頁面（初始隱藏）──
+  GROWTH_DATA.forEach(function(r){
+    var vStores=r.stores.filter(function(s){return s.c2502>0;});
+    var rC2605=r.stores.reduce(function(a,s){return a+s.c2605;},0);
+    var rC2502=r.stores.reduce(function(a,s){return a+s.c2502;},0);
+    var rCDiff=rC2605-rC2502;
+    var rCPct=rC2502>0?Math.round(rCDiff/rC2502*100):0;
+    var avR2605=r.stores.reduce(function(a,s){return a+s.r2605;},0)/r.stores.length;
+    var avR2502=vStores.length>0?vStores.reduce(function(a,s){return a+s.r2502;},0)/vStores.length:avR2605;
+    var avRD=parseFloat((avR2605-avR2502).toFixed(2));
+
+    html+='<div id="gcontent-'+r.id+'" style="display:none">';
+    html+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">';
+    html+='<div style="width:5px;height:42px;border-radius:3px;background:'+r.color+'"></div>';
+    html+='<div><h2 style="font-size:1.2rem;font-weight:800">'+r.name+' · '+r.manager+' 區 — 成長比較</h2>';
+    html+='<p style="font-size:.73rem;color:var(--muted);margin-top:2px">'+t1+' → '+t2+'</p></div></div>';
+
+    html+='<div class="stats">';
+    html+='<div class="stat gold"><div class="stat-lbl">本區評論總數 ('+t2+')</div><div class="stat-val">'+rC2605.toLocaleString()+'</div><div class="stat-sub">較前期 +'+rCDiff.toLocaleString()+'則</div></div>';
+    html+='<div class="stat grn"><div class="stat-lbl">評論成長數</div><div class="stat-val">+'+rCDiff+'</div><div class="stat-sub">成長率 +'+rCPct+'%</div></div>';
+    html+='<div class="stat blu"><div class="stat-lbl">平均評分 ('+t2+')</div><div class="stat-val">'+avR2605.toFixed(2)+'</div><div class="stat-sub">較前期 '+(avRD>=0?'+':'')+avRD+'分</div></div>';
+    var bestGrowth=r.stores.slice().sort(function(a,b){return b.cDiff-a.cDiff||b.cPct-a.cPct;})[0];
+    html+='<div class="stat red"><div class="stat-lbl">成長則數最多門市</div><div class="stat-val" style="font-size:1.1rem">'+(bestGrowth?bestGrowth.name:'--')+'</div><div class="stat-sub">'+(bestGrowth?'+'+bestGrowth.cPct+'%':'--')+'</div></div>';
+    html+='</div>';
+
+    // 本區各門市比較表
+    html+='<div class="sec-title">🏪 '+r.name+' 各店評論成長比較</div>';
+    html+='<div class="dtable"><table><thead><tr>';
+    html+='<th>門市</th>';
+    html+='<th style="text-align:right">'+t1+' 評分</th><th style="text-align:right">'+t2+' 評分</th><th style="text-align:center">評分變化</th>';
+    html+='<th style="text-align:right">'+t1+' 評論數</th><th style="text-align:right">'+t2+' 評論數</th>';
+    html+='<th style="text-align:right">成長則數</th><th style="text-align:center">成長率</th>';
+    html+='<th></th>';
+    html+='</tr></thead><tbody>';
+
+    r.stores.slice().sort(function(a,b){return b.cPct-a.cPct;}).forEach(function(s){
+      var isNew=s.c2502===0;
+      html+='<tr>';
+      html+='<td style="font-weight:700">'+(isNew?'<span style="background:#dbeafe;color:#1e40af;font-size:.6rem;padding:1px 5px;border-radius:3px;font-weight:700;margin-right:4px">NEW</span>':'')+s.name+'</td>';
+      html+='<td style="text-align:right;color:var(--muted)">'+( isNew?'--':s.r2502)+'</td>';
+      html+='<td style="text-align:right;font-weight:700;color:#1e40af">'+s.r2605+'</td>';
+      html+='<td style="text-align:center">'+( isNew?'<span style="background:#dbeafe;color:#1e40af;font-size:.65rem;padding:2px 8px;border-radius:10px;font-weight:700">新門市</span>':rBadge(s.rDiff))+'</td>';
+      html+='<td style="text-align:right;color:var(--muted)">'+( isNew?'--':s.c2502.toLocaleString())+'</td>';
+      html+='<td style="text-align:right;font-weight:700">'+s.c2605.toLocaleString()+'</td>';
+      html+='<td style="text-align:right;color:#059669;font-weight:700">+'+s.cDiff+'</td>';
+      html+='<td style="text-align:center">'+( isNew?'<span style="background:#dbeafe;color:#1e40af;font-size:.65rem;padding:2px 8px;border-radius:10px;font-weight:700">新門市</span>':cBadge(s.cDiff,s.cPct)+' <span style="font-size:.7rem;color:var(--muted)">'+( s.c2502>0?'+'+s.cPct+'%':'--')+'</span>')+'</td>';
+      html+='<td><a href="'+s.url+'" target="_blank" style="color:#1e40af;font-size:.7rem;text-decoration:none">🔗</a></td>';
+      html+='</tr>';
+    });
+    html+='</tbody></table></div>';
+    html+='<canvas id="gchart-'+r.id+'" style="margin-top:18px;max-height:220px"></canvas>';
+    html+='</div>';
+  });
+
+  el.innerHTML=html;
+
+  // 切換 tab 函數
+  window.switchGrowthTab=function(tab){
+    document.querySelectorAll('[id^="gcontent-"]').forEach(function(e){e.style.display='none';});
+    document.querySelectorAll('[id^="gtab-"]').forEach(function(e){
+      e.style.borderColor=''; e.style.color=''; e.style.fontWeight='';
+    });
+    var content=document.getElementById('gcontent-'+tab);
+    if(content)content.style.display='';
+    var btn=document.getElementById('gtab-'+tab);
+    if(btn){btn.style.borderColor='#1e40af';btn.style.color='#1e40af';btn.style.fontWeight='700';}
+
+    if(tab==='all'){
+      setTimeout(function(){
+        mkChart('gchart1','bar',{
+          labels:GROWTH_DATA.map(function(r){return r.name;}),
+          datasets:[
+            {label:t1,data:GROWTH_DATA.map(function(r){return r.stores.reduce(function(a,s){return a+s.c2502;},0);}),backgroundColor:'rgba(100,116,139,0.5)',borderColor:'#64748b',borderWidth:2,borderRadius:4},
+            {label:t2,data:GROWTH_DATA.map(function(r){return r.stores.reduce(function(a,s){return a+s.c2605;},0);}),backgroundColor:GROWTH_DATA.map(function(r){return r.color+'aa';}),borderColor:GROWTH_DATA.map(function(r){return r.color;}),borderWidth:2,borderRadius:4}
+          ]
+        });
+        mkChart('gchart2','bar',{
+          labels:GROWTH_DATA.map(function(r){return r.name;}),
+          datasets:[
+            {label:t1,data:GROWTH_DATA.map(function(r){var v=r.stores.filter(function(s){return s.c2502>0;});return v.length>0?(v.reduce(function(a,s){return a+s.r2502;},0)/v.length).toFixed(2):0;}),backgroundColor:'rgba(100,116,139,0.5)',borderColor:'#64748b',borderWidth:2,borderRadius:4},
+            {label:t2,data:GROWTH_DATA.map(function(r){return (r.stores.reduce(function(a,s){return a+s.r2605;},0)/r.stores.length).toFixed(2);}),backgroundColor:GROWTH_DATA.map(function(r){return r.color+'aa';}),borderColor:GROWTH_DATA.map(function(r){return r.color;}),borderWidth:2,borderRadius:4}
+          ]
+        },{scales:{y:{min:4,max:5}}});
+      },80);
+    } else {
+      var region=GROWTH_DATA.find(function(r){return r.id===tab;});
+      if(!region)return;
+      setTimeout(function(){
+        var sorted=region.stores.slice().sort(function(a,b){return b.cPct-a.cPct;});
+        mkChart('gchart-'+tab,'bar',{
+          labels:sorted.map(function(s){return s.name;}),
+          datasets:[
+            {label:t1+' 評論數',data:sorted.map(function(s){return s.c2502;}),backgroundColor:'rgba(100,116,139,0.5)',borderColor:'#64748b',borderWidth:2,borderRadius:4},
+            {label:t2+' 評論數',data:sorted.map(function(s){return s.c2605;}),backgroundColor:region.color+'88',borderColor:region.color,borderWidth:2,borderRadius:4}
+          ]
+        });
+      },80);
+    }
+  };
+
+  // 預設顯示全台
+  setTimeout(function(){window.switchGrowthTab('all');},50);
 }
 
 function renderRanking(el){
