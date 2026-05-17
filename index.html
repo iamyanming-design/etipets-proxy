@@ -156,6 +156,40 @@ input.fi{flex:1;min-width:180px}
 .ebox{background:#fee2e2;border:2px solid #fca5a5;border-radius:10px;padding:16px;color:#991b1b;font-size:.8rem;line-height:1.7}
 @media(max-width:1200px){.stats{grid-template-columns:repeat(2,1fr)}.charts{grid-template-columns:1fr}.cg{grid-template-columns:1fr}.sum-grid{grid-template-columns:1fr}#region-summary-r1,#region-summary-r2,#region-summary-r3,#region-summary-r4,#region-summary-r5,#region-summary-r6,#region-summary-r7,#region-summary-r8,#region-summary-r9{--summary-cols:1fr}}
 @media(max-width:900px){.sidebar{display:none}.content{padding:14px}.sgrid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}.rt-row{grid-template-columns:110px 1fr 65px 45px;gap:7px;padding:9px 12px}.legend{display:none}}
+@media(max-width:768px){
+  /* 成長比較表格 RWD：隱藏部分欄位 */
+  .gtable-hide-m{display:none!important}
+  /* 各區成長排行：簡化顯示 */
+  .growth-rank-table th:nth-child(4),
+  .growth-rank-table td:nth-child(4),
+  .growth-rank-table th:nth-child(8),
+  .growth-rank-table td:nth-child(8){display:none}
+  /* 各店比較表：隱藏次要欄位 */
+  .store-growth-table th:nth-child(1),
+  .store-growth-table td:nth-child(1),
+  .store-growth-table th:nth-child(3),
+  .store-growth-table td:nth-child(3){display:none}
+}
+@media(max-width:480px){
+  /* 超小螢幕：卡片化顯示成長資料 */
+  .growth-rank-table,
+  .store-growth-table{display:none!important}
+  .growth-cards{display:block!important}
+}
+/* 卡片式顯示（預設隱藏，超小螢幕才顯示）*/
+.growth-cards{display:none}
+.gc{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.gc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.gc-name{font-size:.88rem;font-weight:800;color:var(--text)}
+.gc-rank{font-size:1.1rem}
+.gc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gc-item{background:var(--surface2);border-radius:8px;padding:8px 10px}
+.gc-lbl{font-size:.62rem;color:var(--muted);font-weight:600;margin-bottom:3px}
+.gc-val{font-size:.88rem;font-weight:800;color:var(--text)}
+.gc-diff{font-size:.75rem;font-weight:700}
+.gc-diff.pos{color:#059669}.gc-diff.neg{color:#dc2626}.gc-diff.neu{color:#64748b}
+
 @media(max-width:600px){[id^="region-summary-"] > div:first-child{grid-template-columns:1fr !important}.hdr{padding:10px 14px}.hdr-title h1{font-size:.95rem}.stats{grid-template-columns:repeat(2,1fr);gap:9px}.stat{padding:13px}.stat-val{font-size:1.6rem}.sgrid{grid-template-columns:1fr}.modal{width:99%;max-height:96vh}.modal-hdr{padding:14px}.modal-body{padding:12px}.mtab{padding:4px 9px;font-size:.68rem}.fbar{flex-direction:column}input.fi{min-width:unset;width:100%}.cg{grid-template-columns:1fr}}
 /* ── 漢堡選單 ── */
 .hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;
@@ -837,7 +871,9 @@ function renderGrowth(el){
 
   // 各區成長排行
   html+='<div class="sec-title">🏆 各區評論成長排行</div>';
-  html+='<div class="dtable" style="margin-bottom:22px"><table><thead><tr>';
+  html+='<div class="dtable" style="margin-bottom:22px">';
+  // 桌機版表格
+  html+='<table class="growth-rank-table"><thead><tr>';
   html+='<th>排名</th><th>區域</th><th>負責人</th>';
   html+='<th>'+t1+' 評論數</th><th>'+t2+' 評論數</th>';
   html+='<th>成長則數</th><th>成長率</th>';
@@ -868,7 +904,25 @@ function renderGrowth(el){
     html+='<td style="text-align:center">'+rBadge(rs.rD)+'</td>';
     html+='</tr>';
   });
-  html+='</tbody></table></div>';
+  html+='</tbody></table>';
+  // 手機版卡片
+  html+='<div class="growth-cards">';
+  regionStats.forEach(function(rs,i){
+    var medal_=i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
+    var rPctSign=rs.rD>=0?'+':'';
+    html+='<div class="gc">';
+    html+='<div class="gc-head">';
+    html+='<div><span class="gc-rank">'+medal_+'</span> <span style="font-size:.85rem;font-weight:800;color:'+rs.r.color+'">'+rs.r.name+'</span> <span style="font-size:.75rem;color:var(--muted)">'+rs.r.manager+'</span></div>';
+    html+='</div>';
+    html+='<div class="gc-grid">';
+    html+='<div class="gc-item"><div class="gc-lbl">評論成長</div><div class="gc-val gc-diff pos">+'+rs.cDiff.toLocaleString()+'則</div><div style="font-size:.68rem;color:#059669">+'+rs.cPct+'%</div></div>';
+    html+='<div class="gc-item"><div class="gc-lbl">現有評論數</div><div class="gc-val">'+rs.c2605.toLocaleString()+'</div></div>';
+    html+='<div class="gc-item"><div class="gc-lbl">評分（新）</div><div class="gc-val" style="color:#1e40af">'+rs.avR2605.toFixed(2)+'</div></div>';
+    html+='<div class="gc-item"><div class="gc-lbl">評分變化</div><div class="gc-val gc-diff '+(rs.rD>0?'pos':rs.rD<0?'neg':'neu')+'">'+(rs.rD>0?'▲ +':rs.rD<0?'▼ ':'－ ')+Math.abs(rs.rD).toFixed(2)+'</div></div>';
+    html+='</div></div>';
+  });
+  html+='</div>';
+  html+='</div>';
   html+='</div>';
 
   // ── 各區頁面（初始隱藏）──
@@ -898,7 +952,8 @@ function renderGrowth(el){
 
     // 本區各門市比較表
     html+='<div class="sec-title">🏪 '+r.name+' 各店評論成長比較</div>';
-    html+='<div class="dtable"><table><thead><tr>';
+    html+='<div class="dtable">';
+    html+='<table class="store-growth-table"><thead><tr>';
     html+='<th>門市</th>';
     html+='<th style="text-align:right">'+t1+' 評分</th><th style="text-align:right">'+t2+' 評分</th><th style="text-align:center">評分變化</th>';
     html+='<th style="text-align:right">'+t1+' 評論數</th><th style="text-align:right">'+t2+' 評論數</th>';
@@ -920,7 +975,25 @@ function renderGrowth(el){
       html+='<td><a href="'+s.url+'" target="_blank" style="color:#1e40af;font-size:.7rem;text-decoration:none">🔗</a></td>';
       html+='</tr>';
     });
-    html+='</tbody></table></div>';
+    html+='</tbody></table>';
+    // 手機版卡片
+    html+='<div class="growth-cards">';
+    r.stores.slice().sort(function(a,b){return b.cDiff-a.cDiff||b.cPct-a.cPct;}).forEach(function(s){
+      var isNew=s.c2502===0;
+      html+='<div class="gc">';
+      html+='<div class="gc-head">';
+      html+='<div class="gc-name">'+(isNew?'<span style="background:#dbeafe;color:#1e40af;font-size:.6rem;padding:1px 5px;border-radius:3px;font-weight:700;margin-right:4px">NEW</span>':'')+s.name+'</div>';
+      html+='<a href="'+s.url+'" target="_blank" style="color:#1e40af;font-size:.8rem">🔗</a>';
+      html+='</div>';
+      html+='<div class="gc-grid">';
+      html+='<div class="gc-item"><div class="gc-lbl">評論成長</div><div class="gc-val gc-diff pos">+'+s.cDiff+'則</div>'+(s.c2502>0?'<div style="font-size:.68rem;color:#059669">+'+s.cPct+'%</div>':'')+'</div>';
+      html+='<div class="gc-item"><div class="gc-lbl">現有評論數</div><div class="gc-val">'+s.c2605.toLocaleString()+'</div>'+(isNew?'':'<div style="font-size:.68rem;color:var(--muted)">前期 '+s.c2502+'</div>')+'</div>';
+      html+='<div class="gc-item"><div class="gc-lbl">評分（新）</div><div class="gc-val" style="color:#1e40af">'+s.r2605+'</div></div>';
+      html+='<div class="gc-item"><div class="gc-lbl">評分變化</div><div class="gc-val gc-diff '+(isNew?'neu':s.rDiff>0?'pos':s.rDiff<0?'neg':'neu')+'">'+(isNew?'新門市':s.rDiff>0?'▲ +'+s.rDiff:s.rDiff<0?'▼ '+s.rDiff:'－ 持平')+'</div></div>';
+      html+='</div></div>';
+    });
+    html+='</div>';
+    html+='</div>';
     html+='<canvas id="gchart-'+r.id+'" style="margin-top:18px;max-height:220px"></canvas>';
     html+='</div>';
   });
