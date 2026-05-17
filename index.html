@@ -726,7 +726,12 @@ function loadRegionSummary(region){
   // 高聲量低評分
   var highVolLowScore=region.stores.filter(function(s){return s.count>500&&s.rating<4.5;});
   // 新開門市
-  var newStores=gStores.filter(function(s){return s.c2502===0;});
+  // c2502=0 可能是統計遺漏的舊門市，不全部視為新門市
+  // 以評論數少（c2605<100）且評分極低（r2605<2）視為異常，排除於新門市之外
+  var EXCLUDED_NEW=['士林文林二店']; // 已知統計遺漏的舊門市
+  var newStores=gStores.filter(function(s){
+    return s.c2502===0 && EXCLUDED_NEW.indexOf(s.name)<0;
+  });
 
   // ── 正評優點（結合評分與成長資料）──
   var pros=[];
@@ -868,7 +873,8 @@ function renderGrowth(el){
   var avgR2605=allS.reduce(function(a,s){return a+s.r2605;},0)/allS.length;
   var avgR2502=validS.reduce(function(a,s){return a+s.r2502;},0)/validS.length;
   var rDiff=avgR2605-avgR2502;
-  var newStores=allS.filter(function(s){return s.c2502===0;});
+  var EXCL_ALL=['士林文林二店'];
+  var newStores=allS.filter(function(s){return s.c2502===0&&EXCL_ALL.indexOf(s.name)<0;});
 
   // 評分變化標籤
   function rBadge(diff){
@@ -1005,7 +1011,8 @@ function renderGrowth(el){
     html+='</tr></thead><tbody>';
 
     r.stores.slice().sort(function(a,b){return b.cPct-a.cPct;}).forEach(function(s){
-      var isNew=s.c2502===0;
+      var EXCL=['士林文林二店'];
+      var isNew=s.c2502===0&&EXCL.indexOf(s.name)<0;
       html+='<tr>';
       html+='<td style="font-weight:700">'+(isNew?'<span style="background:#dbeafe;color:#1e40af;font-size:.6rem;padding:1px 5px;border-radius:3px;font-weight:700;margin-right:4px">NEW</span>':'')+s.name+'</td>';
       html+='<td style="text-align:right;color:var(--muted)">'+( isNew?'--':s.r2502)+'</td>';
@@ -1022,7 +1029,8 @@ function renderGrowth(el){
     // 手機版卡片
     html+='<div class="growth-cards">';
     r.stores.slice().sort(function(a,b){return b.cDiff-a.cDiff||b.cPct-a.cPct;}).forEach(function(s){
-      var isNew=s.c2502===0;
+      var EXCL=['士林文林二店'];
+      var isNew=s.c2502===0&&EXCL.indexOf(s.name)<0;
       html+='<div class="gc">';
       html+='<div class="gc-head">';
       html+='<div class="gc-name">'+(isNew?'<span style="background:#dbeafe;color:#1e40af;font-size:.6rem;padding:1px 5px;border-radius:3px;font-weight:700;margin-right:4px">NEW</span>':'')+s.name+'</div>';
