@@ -697,98 +697,140 @@ function loadRegionSummary(region){
   var el=document.getElementById('region-summary-'+region.id);
   if(!el)return;
 
-  // 依評分分類門市
-  var highStores=region.stores.filter(function(s){return s.rating>=4.7;});
-  var midStores=region.stores.filter(function(s){return s.rating>=4.4&&s.rating<4.7;});
-  var lowStores=region.stores.filter(function(s){return s.rating<4.4;});
+  // 從 GROWTH_DATA 取得對應區域成長資料
+  var gRegion=GROWTH_DATA.find(function(r){return r.id===region.id;});
+  var gStores=gRegion?gRegion.stores:[];
 
+  // 基礎統計
   var avgR=region.stores.reduce(function(a,s){return a+s.rating;},0)/region.stores.length;
   var totalReviews=region.stores.reduce(function(a,s){return a+s.count;},0);
+  var highStores=region.stores.filter(function(s){return s.rating>=4.7;});
+  var lowStores=region.stores.filter(function(s){return s.rating<4.4;});
 
-  // 正評優點（依高評分門市特性推斷）
+  // 成長資料交叉比對
+  var validG=gStores.filter(function(s){return s.c2502>0;});
+  var totalC2605=gStores.reduce(function(a,s){return a+s.c2605;},0);
+  var totalC2502=gStores.reduce(function(a,s){return a+s.c2502;},0);
+  var totalGrowth=totalC2605-totalC2502;
+  var growthPct=totalC2502>0?Math.round(totalGrowth/totalC2502*100):0;
+  var avgR2605=gStores.length>0?gStores.reduce(function(a,s){return a+s.r2605;},0)/gStores.length:avgR;
+  var avgR2502=validG.length>0?validG.reduce(function(a,s){return a+s.r2502;},0)/validG.length:avgR;
+  var rGrowth=parseFloat((avgR2605-avgR2502).toFixed(2));
+
+  // 成長最多門市
+  var topGrowthStore=gStores.slice().sort(function(a,b){return b.cDiff-a.cDiff||b.cPct-a.cPct;})[0];
+  // 評分下滑門市（評分退步）
+  var declineStores=gStores.filter(function(s){return s.rDiff<-0.05&&s.c2502>0;});
+  // 評分進步門市
+  var improvedStores=gStores.filter(function(s){return s.rDiff>0.05&&s.c2502>0;});
+  // 高聲量低評分
+  var highVolLowScore=region.stores.filter(function(s){return s.count>500&&s.rating<4.5;});
+  // 新開門市
+  var newStores=gStores.filter(function(s){return s.c2502===0;});
+
+  // ── 正評優點（結合評分與成長資料）──
   var pros=[];
-  pros.push('整體服務態度親切，顧客反映員工具備專業寵物知識');
-  if(region.stores.some(function(s){return s.count>500;}))
-    pros.push('高評論數門市口碑佳，顯示穩定客群與高回訪率');
   if(highStores.length>0)
-    pros.push('本區共 '+highStores.length+' 家門市評分達 4.7 分以上，服務品質優異');
-  if(region.stores.some(function(s){return s.name.indexOf('旗艦')>-1||s.name.indexOf('巨蛋')>-1;}))
-    pros.push('旗艦型門市設備完善，商品選擇豐富，一站式服務獲顧客肯定');
-  if(avgR>=4.6)
-    pros.push('區域平均評分 '+avgR.toFixed(2)+' 分，整體表現優於業界水準');
-  // 限制最多5點
-  pros=pros.slice(0,5);
+    pros.push('本區 '+highStores.length+' 家門市評分 4.7+（'+highStores.slice(0,2).map(function(s){return s.name;}).join('、')+(highStores.length>2?'等':'')+'），服務口碑穩定');
+  if(growthPct>0)
+    pros.push('評論總數較前期成長 +'+totalGrowth+'則（+'+growthPct+'%），顧客互動持續提升');
+  if(rGrowth>0)
+    pros.push('區域平均評分由 '+avgR2502.toFixed(2)+' 升至 '+avgR2605.toFixed(2)+'（+'+rGrowth+'），整體品質進步');
+  if(improvedStores.length>0)
+    pros.push('評分提升門市：'+improvedStores.slice(0,3).map(function(s){return s.name+'(+'+s.rDiff+')';}).join('、')+'，改善成效顯著');
+  if(topGrowthStore&&topGrowthStore.cDiff>50)
+    pros.push('評論成長最多：'+topGrowthStore.name+'（+'+topGrowthStore.cDiff+'則），顧客回饋活躍');
+  pros=pros.filter(function(p){return p;}).slice(0,5);
+  if(pros.length===0) pros.push('整體表現穩定，維持良好口碑');
 
-  // 負評缺點（依低評分門市與常見問題推斷）
+  // ── 負評缺點（結合低評分與評分退步資料）──
   var cons=[];
   if(lowStores.length>0)
-    cons.push('本區 '+lowStores.length+' 家門市評分低於 4.4 分，需優先改善：'+lowStores.map(function(s){return s.name+'('+s.rating+')';}).join('、'));
-  var highCountLowScore=region.stores.filter(function(s){return s.count>500&&s.rating<4.5;});
-  if(highCountLowScore.length>0)
-    cons.push('高聲量但評分偏低門市（'+highCountLowScore.map(function(s){return s.name;}).join('、')+'），負評影響範圍較廣');
-  cons.push('部分顧客反映假日尖峰時段等候時間過長');
-  if(avgR<4.6)
-    cons.push('區域平均評分 '+avgR.toFixed(2)+' 分，距離 4.6 優質標準仍有提升空間');
-  cons.push('個別門市服務品質參差不齊，需建立統一服務標準');
-  cons=cons.slice(0,5);
+    cons.push('低評分門市需優先關注：'+lowStores.map(function(s){return s.name+'（'+s.rating+'）';}).join('、'));
+  if(declineStores.length>0)
+    cons.push('評分退步門市：'+declineStores.slice(0,3).map(function(s){return s.name+'（'+s.rDiff+'）';}).join('、')+'，需查明原因');
+  if(highVolLowScore.length>0)
+    cons.push('高聲量但評分偏低：'+highVolLowScore.map(function(s){return s.name+'（'+s.rating+'，'+s.count+'則）';}).join('、')+'，負評影響廣');
+  if(rGrowth<0)
+    cons.push('區域平均評分較前期下滑 '+Math.abs(rGrowth)+'分，需全面檢視服務品質');
+  if(cons.length<2)
+    cons.push('部分門市評論成長趨緩，需強化顧客留評誘因');
+  cons=cons.filter(function(p){return p;}).slice(0,5);
 
-  // 改善重點
+  // ── 改善重點（具體可執行）──
   var tips=[];
-  if(lowStores.length>0)
-    tips.push('【優先】針對低評分門市（'+lowStores.map(function(s){return s.name;}).join('、')+'）進行實地稽核與人員培訓');
-  tips.push('建立線上預約制度，改善假日人流管控與等候體驗');
-  tips.push('以高評分門市（'+highStores.slice(0,2).map(function(s){return s.name;}).join('、')+'）為標竿，推廣優良服務 SOP');
-  tips.push('主動回覆 Google 負評，展現品牌重視顧客意見的態度');
-  tips.push('每月追蹤各門市 Google 評分變化，建立預警機制');
-  tips=tips.slice(0,5);
+  if(lowStores.length>0||declineStores.length>0){
+    var urgentList=lowStores.concat(declineStores.filter(function(s){return lowStores.indexOf(s)<0;}));
+    tips.push('【即期】'+urgentList.slice(0,2).map(function(s){return s.name;}).join('、')+'安排實地稽核，釐清顧客投訴根因');
+  }
+  if(highStores.length>0)
+    tips.push('以 '+highStores[0].name+' 為標竿，將服務 SOP 複製至同區表現較弱門市');
+  if(highVolLowScore.length>0)
+    tips.push(highVolLowScore[0].name+' 聲量大，優先建立 Google 負評回覆機制，減少口碑損傷');
+  tips.push('設定每月評分追蹤 KPI，評分低於 4.4 觸發自動預警通報');
+  if(newStores.length>0)
+    tips.push('新開門市（'+newStores.map(function(s){return s.name;}).join('、')+'）加強開幕期評論引導，儘速累積口碑基礎');
+  tips=tips.filter(function(p){return p;}).slice(0,5);
+  if(tips.length<2) tips.push('持續鼓勵顧客留評，提升本區整體聲量與曝光度');
 
-  // 建立彙整 HTML
+  // ── 建立 HTML ──
   var html='';
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px">';
+
+  // 成長數據摘要列
+  html+='<div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">';
+  var kpis=[
+    {label:'前期均分',val:avgR2502.toFixed(2),color:'#64748b'},
+    {label:'現期均分',val:avgR2605.toFixed(2),color:'#1e40af'},
+    {label:'評分變化',val:(rGrowth>=0?'+':'')+rGrowth,color:rGrowth>=0?'#059669':'#dc2626'},
+    {label:'評論成長',val:'+'+totalGrowth+'則',color:'#059669'},
+    {label:'成長率',val:'+'+growthPct+'%',color:'#d97706'},
+    {label:'新增門市',val:newStores.length+'間',color:'#7c3aed'},
+  ];
+  kpis.forEach(function(k){
+    html+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 14px;flex:1;min-width:80px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.06)">';
+    html+='<div style="font-size:.62rem;color:#64748b;font-weight:600;margin-bottom:3px">'+k.label+'</div>';
+    html+='<div style="font-size:1rem;font-weight:900;color:'+k.color+'">'+k.val+'</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+
+  // 三欄分析
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">';
 
   // 正評優點
-  html+='<div style="background:#f0fdf4;border:2px solid #86efac;border-radius:12px;padding:18px">';
-  html+='<div style="font-size:.72rem;font-weight:800;color:#065f46;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #86efac">✅ 正評主要優點</div>';
+  html+='<div style="background:#f0fdf4;border:2px solid #86efac;border-radius:12px;padding:16px">';
+  html+='<div style="font-size:.7rem;font-weight:800;color:#065f46;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;padding-bottom:7px;border-bottom:2px solid #86efac">✅ 正評主要優點</div>';
   html+='<ul style="list-style:none;padding:0">';
   pros.forEach(function(p,i){
-    html+='<li style="font-size:.78rem;color:#1e293b;padding:6px 0;border-bottom:1px solid #dcfce7;display:flex;gap:8px;line-height:1.55">';
+    html+='<li style="font-size:.77rem;color:#1e293b;padding:5px 0;border-bottom:1px solid #dcfce7;display:flex;gap:7px;line-height:1.5">';
     html+='<span style="color:#059669;font-weight:800;flex-shrink:0">'+(i+1)+'.</span><span>'+p+'</span></li>';
   });
   html+='</ul></div>';
 
   // 負評缺點
-  html+='<div style="background:#fef2f2;border:2px solid #fca5a5;border-radius:12px;padding:18px">';
-  html+='<div style="font-size:.72rem;font-weight:800;color:#991b1b;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #fca5a5">⚠️ 負評主要缺點</div>';
+  html+='<div style="background:#fef2f2;border:2px solid #fca5a5;border-radius:12px;padding:16px">';
+  html+='<div style="font-size:.7rem;font-weight:800;color:#991b1b;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;padding-bottom:7px;border-bottom:2px solid #fca5a5">⚠️ 負評主要缺點</div>';
   html+='<ul style="list-style:none;padding:0">';
   cons.forEach(function(c,i){
-    html+='<li style="font-size:.78rem;color:#1e293b;padding:6px 0;border-bottom:1px solid #fee2e2;display:flex;gap:8px;line-height:1.55">';
+    html+='<li style="font-size:.77rem;color:#1e293b;padding:5px 0;border-bottom:1px solid #fee2e2;display:flex;gap:7px;line-height:1.5">';
     html+='<span style="color:#dc2626;font-weight:800;flex-shrink:0">'+(i+1)+'.</span><span>'+c+'</span></li>';
   });
   html+='</ul></div>';
 
   // 改善重點
-  html+='<div style="background:#eff6ff;border:2px solid #93c5fd;border-radius:12px;padding:18px">';
-  html+='<div style="font-size:.72rem;font-weight:800;color:#1e40af;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #93c5fd">🚀 改善重點</div>';
+  html+='<div style="background:#eff6ff;border:2px solid #93c5fd;border-radius:12px;padding:16px">';
+  html+='<div style="font-size:.7rem;font-weight:800;color:#1e40af;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;padding-bottom:7px;border-bottom:2px solid #93c5fd">🚀 改善重點</div>';
   html+='<ul style="list-style:none;padding:0">';
   tips.forEach(function(t,i){
-    html+='<li style="font-size:.78rem;color:#1e293b;padding:6px 0;border-bottom:1px solid #dbeafe;display:flex;gap:8px;line-height:1.55">';
+    html+='<li style="font-size:.77rem;color:#1e293b;padding:5px 0;border-bottom:1px solid #dbeafe;display:flex;gap:7px;line-height:1.5">';
     html+='<span style="color:#1e40af;font-weight:800;flex-shrink:0">'+(i+1)+'.</span><span>'+t+'</span></li>';
   });
   html+='</ul></div>';
 
   html+='</div>';
-
-  // 加入統計小結
-  html+='<div style="margin-top:16px;padding:14px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);font-size:.78rem;color:var(--muted);line-height:1.8">';
-  html+='📊 <strong style="color:var(--text)">本區統計摘要：</strong>';
-  html+=region.stores.length+'家門市 · 平均評分 <strong style="color:#1e40af">'+avgR.toFixed(2)+'</strong> 分 · ';
-  html+='評論總數 <strong style="color:#059669">'+totalReviews.toLocaleString()+'</strong> 則 · ';
-  html+='優質門市(4.7+) <strong style="color:#059669">'+highStores.length+'</strong> 家 · ';
-  html+='需關注(4.4-) <strong style="color:#dc2626">'+lowStores.length+'</strong> 家';
-  html+='</div>';
-
   el.innerHTML=html;
 }
+
 
 function renderRegion(el,rid){
   var region=REGIONS.find(function(r){return r.id===rid;});if(!region)return;
