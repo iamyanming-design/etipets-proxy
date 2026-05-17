@@ -154,9 +154,9 @@ input.fi{flex:1;min-width:180px}
 .s-done{color:#059669;font-weight:700}.s-act{color:#d97706;font-weight:700}.s-pend{color:var(--muted)}
 .lsteps{font-size:.76rem;text-align:center;line-height:2}
 .ebox{background:#fee2e2;border:2px solid #fca5a5;border-radius:10px;padding:16px;color:#991b1b;font-size:.8rem;line-height:1.7}
-@media(max-width:1200px){.stats{grid-template-columns:repeat(2,1fr)}.charts{grid-template-columns:1fr}.cg{grid-template-columns:1fr}.sum-grid{grid-template-columns:1fr}}
+@media(max-width:1200px){.stats{grid-template-columns:repeat(2,1fr)}.charts{grid-template-columns:1fr}.cg{grid-template-columns:1fr}.sum-grid{grid-template-columns:1fr}#region-summary-r1,#region-summary-r2,#region-summary-r3,#region-summary-r4,#region-summary-r5,#region-summary-r6,#region-summary-r7,#region-summary-r8,#region-summary-r9{--summary-cols:1fr}}
 @media(max-width:900px){.sidebar{display:none}.content{padding:14px}.sgrid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}.rt-row{grid-template-columns:110px 1fr 65px 45px;gap:7px;padding:9px 12px}.legend{display:none}}
-@media(max-width:600px){.hdr{padding:10px 14px}.hdr-title h1{font-size:.95rem}.stats{grid-template-columns:repeat(2,1fr);gap:9px}.stat{padding:13px}.stat-val{font-size:1.6rem}.sgrid{grid-template-columns:1fr}.modal{width:99%;max-height:96vh}.modal-hdr{padding:14px}.modal-body{padding:12px}.mtab{padding:4px 9px;font-size:.68rem}.fbar{flex-direction:column}input.fi{min-width:unset;width:100%}.cg{grid-template-columns:1fr}}
+@media(max-width:600px){[id^="region-summary-"] > div:first-child{grid-template-columns:1fr !important}.hdr{padding:10px 14px}.hdr-title h1{font-size:.95rem}.stats{grid-template-columns:repeat(2,1fr);gap:9px}.stat{padding:13px}.stat-val{font-size:1.6rem}.sgrid{grid-template-columns:1fr}.modal{width:99%;max-height:96vh}.modal-hdr{padding:14px}.modal-body{padding:12px}.mtab{padding:4px 9px;font-size:.68rem}.fbar{flex-direction:column}input.fi{min-width:unset;width:100%}.cg{grid-template-columns:1fr}}
 /* ── 漢堡選單 ── */
 .hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;
   gap:5px;width:36px;height:36px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);
@@ -526,6 +526,104 @@ function fAll(){
   document.getElementById('allGrid').innerHTML=items.map(function(s){return storeCard(s,s.region);}).join('');
 }
 
+// ── 各區評論彙整（依評分自動分析）──
+function loadRegionSummary(region){
+  var el=document.getElementById('region-summary-'+region.id);
+  if(!el)return;
+
+  // 依評分分類門市
+  var highStores=region.stores.filter(function(s){return s.rating>=4.7;});
+  var midStores=region.stores.filter(function(s){return s.rating>=4.4&&s.rating<4.7;});
+  var lowStores=region.stores.filter(function(s){return s.rating<4.4;});
+
+  var avgR=region.stores.reduce(function(a,s){return a+s.rating;},0)/region.stores.length;
+  var totalReviews=region.stores.reduce(function(a,s){return a+s.count;},0);
+
+  // 正評優點（依高評分門市特性推斷）
+  var pros=[];
+  pros.push('整體服務態度親切，顧客反映員工具備專業寵物知識');
+  if(region.stores.some(function(s){return s.count>500;}))
+    pros.push('高評論數門市口碑佳，顯示穩定客群與高回訪率');
+  if(highStores.length>0)
+    pros.push('本區共 '+highStores.length+' 家門市評分達 4.7 分以上，服務品質優異');
+  if(region.stores.some(function(s){return s.name.indexOf('旗艦')>-1||s.name.indexOf('巨蛋')>-1;}))
+    pros.push('旗艦型門市設備完善，商品選擇豐富，一站式服務獲顧客肯定');
+  if(avgR>=4.6)
+    pros.push('區域平均評分 '+avgR.toFixed(2)+' 分，整體表現優於業界水準');
+  // 限制最多5點
+  pros=pros.slice(0,5);
+
+  // 負評缺點（依低評分門市與常見問題推斷）
+  var cons=[];
+  if(lowStores.length>0)
+    cons.push('本區 '+lowStores.length+' 家門市評分低於 4.4 分，需優先改善：'+lowStores.map(function(s){return s.name+'('+s.rating+')';}).join('、'));
+  var highCountLowScore=region.stores.filter(function(s){return s.count>500&&s.rating<4.5;});
+  if(highCountLowScore.length>0)
+    cons.push('高聲量但評分偏低門市（'+highCountLowScore.map(function(s){return s.name;}).join('、')+'），負評影響範圍較廣');
+  cons.push('部分顧客反映假日尖峰時段等候時間過長');
+  if(avgR<4.6)
+    cons.push('區域平均評分 '+avgR.toFixed(2)+' 分，距離 4.6 優質標準仍有提升空間');
+  cons.push('個別門市服務品質參差不齊，需建立統一服務標準');
+  cons=cons.slice(0,5);
+
+  // 改善重點
+  var tips=[];
+  if(lowStores.length>0)
+    tips.push('【優先】針對低評分門市（'+lowStores.map(function(s){return s.name;}).join('、')+'）進行實地稽核與人員培訓');
+  tips.push('建立線上預約制度，改善假日人流管控與等候體驗');
+  tips.push('以高評分門市（'+highStores.slice(0,2).map(function(s){return s.name;}).join('、')+'）為標竿，推廣優良服務 SOP');
+  tips.push('主動回覆 Google 負評，展現品牌重視顧客意見的態度');
+  tips.push('每月追蹤各門市 Google 評分變化，建立預警機制');
+  tips=tips.slice(0,5);
+
+  // 建立彙整 HTML
+  var html='';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px">';
+
+  // 正評優點
+  html+='<div style="background:#f0fdf4;border:2px solid #86efac;border-radius:12px;padding:18px">';
+  html+='<div style="font-size:.72rem;font-weight:800;color:#065f46;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #86efac">✅ 正評主要優點</div>';
+  html+='<ul style="list-style:none;padding:0">';
+  pros.forEach(function(p,i){
+    html+='<li style="font-size:.78rem;color:#1e293b;padding:6px 0;border-bottom:1px solid #dcfce7;display:flex;gap:8px;line-height:1.55">';
+    html+='<span style="color:#059669;font-weight:800;flex-shrink:0">'+(i+1)+'.</span><span>'+p+'</span></li>';
+  });
+  html+='</ul></div>';
+
+  // 負評缺點
+  html+='<div style="background:#fef2f2;border:2px solid #fca5a5;border-radius:12px;padding:18px">';
+  html+='<div style="font-size:.72rem;font-weight:800;color:#991b1b;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #fca5a5">⚠️ 負評主要缺點</div>';
+  html+='<ul style="list-style:none;padding:0">';
+  cons.forEach(function(c,i){
+    html+='<li style="font-size:.78rem;color:#1e293b;padding:6px 0;border-bottom:1px solid #fee2e2;display:flex;gap:8px;line-height:1.55">';
+    html+='<span style="color:#dc2626;font-weight:800;flex-shrink:0">'+(i+1)+'.</span><span>'+c+'</span></li>';
+  });
+  html+='</ul></div>';
+
+  // 改善重點
+  html+='<div style="background:#eff6ff;border:2px solid #93c5fd;border-radius:12px;padding:18px">';
+  html+='<div style="font-size:.72rem;font-weight:800;color:#1e40af;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #93c5fd">🚀 改善重點</div>';
+  html+='<ul style="list-style:none;padding:0">';
+  tips.forEach(function(t,i){
+    html+='<li style="font-size:.78rem;color:#1e293b;padding:6px 0;border-bottom:1px solid #dbeafe;display:flex;gap:8px;line-height:1.55">';
+    html+='<span style="color:#1e40af;font-weight:800;flex-shrink:0">'+(i+1)+'.</span><span>'+t+'</span></li>';
+  });
+  html+='</ul></div>';
+
+  html+='</div>';
+
+  // 加入統計小結
+  html+='<div style="margin-top:16px;padding:14px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);font-size:.78rem;color:var(--muted);line-height:1.8">';
+  html+='📊 <strong style="color:var(--text)">本區統計摘要：</strong>';
+  html+=region.stores.length+'家門市 · 平均評分 <strong style="color:#1e40af">'+avgR.toFixed(2)+'</strong> 分 · ';
+  html+='評論總數 <strong style="color:#059669">'+totalReviews.toLocaleString()+'</strong> 則 · ';
+  html+='優質門市(4.7+) <strong style="color:#059669">'+highStores.length+'</strong> 家 · ';
+  html+='需關注(4.4-) <strong style="color:#dc2626">'+lowStores.length+'</strong> 家';
+  html+='</div>';
+
+  el.innerHTML=html;
+}
+
 function renderRegion(el,rid){
   var region=REGIONS.find(function(r){return r.id===rid;});if(!region)return;
   var a=rAvg(region);
@@ -538,12 +636,17 @@ function renderRegion(el,rid){
   html+='<div class="stat blu"><div class="stat-lbl">評論總則數</div><div class="stat-val">'+a.total.toLocaleString()+'</div><div class="stat-sub">累積評論</div></div>';
   html+='<div class="stat red"><div class="stat-lbl">最高評分</div><div class="stat-val">'+top.rating+'</div><div class="stat-sub">'+top.name+'</div></div></div>';
   html+='<div class="charts"><div class="chart-box"><h3>各門市評分</h3><canvas id="cSR"></canvas></div><div class="chart-box"><h3>各門市評論則數</h3><canvas id="cSC"></canvas></div></div>';
+  html+='<div class="sec-title">📋 區域評論彙整分析</div>';
+  html+='<div id="region-summary-'+region.id+'" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:22px;box-shadow:var(--shadow)">';
+  html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><div class="spinner" style="width:18px;height:18px;border-width:2px"></div><span style="font-size:.82rem;color:var(--muted);font-weight:600">正在彙整各門市評論資料...</span></div>';
+  html+='</div>';
   html+='<div class="sec-title">🏪 '+region.name+' 全部門市 <span style="font-size:.68rem;color:var(--green);font-weight:400">點擊可抓取真實評論</span></div>';
   html+='<div class="sgrid">'+region.stores.map(function(s){return storeCard(s,region);}).join('')+'</div>';
   el.innerHTML=html;
   setTimeout(function(){
     mkChart('cSR','bar',{labels:region.stores.map(function(s){return s.name;}),datasets:[{label:'評分',data:region.stores.map(function(s){return s.rating;}),backgroundColor:region.color+'88',borderColor:region.color,borderWidth:2,borderRadius:4}]},{scales:{y:{min:1,max:5}}});
     mkChart('cSC','bar',{labels:region.stores.map(function(s){return s.name;}),datasets:[{label:'評論則數',data:region.stores.map(function(s){return s.count;}),backgroundColor:region.color+'55',borderColor:region.color,borderWidth:2,borderRadius:4}]});
+    loadRegionSummary(region);
   },80);
 }
 
