@@ -583,6 +583,157 @@ function closeSidebarOnMobile(){
   }
 }
 
+// ── MODAL 真實評論抓取 ──
+async function openModal(storeName,regionName,manager,url,rating,count){
+  document.getElementById('mTitle').textContent=storeName+' — 真實評論分析';
+  document.getElementById('mSub').textContent=regionName+' · '+manager+'區 · ⭐'+rating+' · '+count.toLocaleString()+'則評論';
+  document.getElementById('mBody').innerHTML='<div class="loading"><div class="spinner"></div><div class="pbar"><div class="pfill" id="prog" style="width:0%"></div></div><div class="lsteps"><div id="s1" class="s-act">⏳ Step 1：搜尋 Google Maps 門市資料...</div><div id="s2" class="s-pend">○ Step 2：抓取真實 Google 評論...</div><div id="s3" class="s-pend">○ Step 3：分析評論內容...</div></div></div>';
+  document.getElementById('modal').classList.add('open');
+  function setStep(n,msg){
+    for(var i=1;i<=3;i++){
+      var e=document.getElementById('s'+i);if(!e)continue;
+      e.className=i<n?'s-done':i===n?'s-act':'s-pend';
+      if(i<n)e.textContent=e.textContent.replace('⏳','✅').replace('○','✅');
+      if(i===n&&msg)e.textContent='⏳ '+msg;
+    }
+    var pf=document.getElementById('prog');if(pf)pf.style.width=((n-1)*33)+'%';
+  }
+  try{
+    setStep(1,'Step 1：搜尋 Google Maps 門市資料...');
+    var searchUrl=PROXY_URL+'/search?engine=google_maps&q='+encodeURIComponent('東森寵物 '+storeName)+'&hl=zh-tw&gl=tw';
+    var r1=await fetch(searchUrl,{method:'GET',mode:'cors'});
+    if(!r1.ok)throw new Error('搜尋失敗 HTTP '+r1.status);
+    var d1=await r1.json();
+    if(d1.error)throw new Error(d1.error);
+    var dataId=null;
+    if(d1.local_results&&d1.local_results.length>0){
+      var matched=null;
+      for(var i=0;i<d1.local_results.length;i++){
+        if(d1.local_results[i].title&&d1.local_results[i].title.indexOf(storeName.replace(/[店館院]/g,''))>-1){matched=d1.local_results[i];break;}
+      }
+      if(!matched)matched=d1.local_results[0];
+      dataId=matched.data_id;
+    }else if(d1.place_results&&d1.place_results.data_id){
+      dataId=d1.place_results.data_id;
+    }
+    if(!dataId)throw new Error('找不到門市資料');
+    setStep(2,'Step 2：抓取真實 Google 評論...');
+    var reviewUrl=PROXY_URL+'/search?engine=google_maps_reviews&data_id='+encodeURIComponent(dataId)+'&hl=zh-tw&sort_by=newestFirst';
+    var r2=await fetch(reviewUrl,{method:'GET',mode:'cors'});
+    if(!r2.ok)throw new Error('抓取評論失敗 HTTP '+r2.status);
+    var d2=await r2.json();
+    if(d2.error)throw new Error(d2.error);
+    var reviews=d2.reviews||[];
+    if(reviews.length===0)throw new Error('此門市目前無評論資料');
+    setStep(3,'Step 3：分析評論內容...');
+    await new Promise(function(res){setTimeout(res,300);});
+    var analysis=analyzeLocal(reviews,rating);
+    var pf2=document.getElementById('prog');if(pf2)pf2.style.width='100%';
+    await new Promise(function(res){setTimeout(res,200);});
+    renderModal(storeName,regionName,url,rating,count,reviews,analysis);
+  }catch(err){
+    document.getElementById('mBody').innerHTML='<div class="ebox"><strong>⚠️ 抓取失敗：'+err.message+'</strong><br><br>可能原因：<br>• Proxy 伺服器正在從休眠喚醒（請等30秒後再試）<br>• SerpApi 搜尋額度不足<br><br><a href="'+url+'" target="_blank" style="color:#1e40af">🔗 點此直接前往 Google Maps 查看真實評論</a></div>';
+  }
+}
+
+function analyzeLocal(reviews,storeRating){
+  var posW=['親切','專業','乾淨','整潔','用心','貼心','推薦','滿意','開心','舒適','齊全','豐富','友善','耐心','細心','溫柔','方便','優質','棒','讚'];
+  var negW=['等候','態度','昂貴','髒亂','擁擠','不滿','失望','問題','改善','臭味','噪音','停車','貴','慢','差'];
+  var analyzed=reviews.slice(0,15).map(function(r,i){
+    var stars=r.rating||5;
+    var text=(r.snippet||r.text||'');
+    var sent=stars>=4?'positive':stars>=3?'neutral':'negative';
+    var nc=negW.filter(function(w){return text.indexOf(w)>-1;}).length;
+    var pc=posW.filter(function(w){return text.indexOf(w)>-1;}).length;
+    if(nc>pc+1&&sent==='positive')sent='neutral';
+    if(pc>nc+2&&sent==='negative')sent='neutral';
+    var pros=sent!=='negative'?(stars>=4?'服務優質親切':stars>=3?'環境尚可整潔':null):null;
+    var cons=sent!=='positive'?(stars<=2?'服務態度差':stars===3?'服務效率待提升':null):null;
+    var tip=sent!=='positive'?(stars<=2?'全面改善服務流程':stars===3?'加強服務速度':null):null;
+    return{index:i+1,sentiment:sent,pros:pros,cons:cons,tip:tip};
+  });
+  var pos=analyzed.filter(function(r){return r.sentiment==='positive';}).length;
+  var neg=analyzed.filter(function(r){return r.sentiment==='negative';});
+  var posRate=Math.round(pos/analyzed.length*100);
+  var allText=reviews.slice(0,15).map(function(r){return r.snippet||r.text||'';}).join(' ');
+  var themes=[];
+  if(/店員|員工|服務人員/.test(allText))themes.push('店員服務親切');
+  if(/美容|洗澡|剪毛/.test(allText))themes.push('美容技術優良');
+  if(/商品|飼料|用品/.test(allText))themes.push('商品選擇豐富');
+  if(/環境|乾淨|整潔/.test(allText))themes.push('環境整潔舒適');
+  if(/住宿|寄宿/.test(allText))themes.push('住宿服務貼心');
+  var negThemes=[];
+  if(/等|慢|久/.test(allText))negThemes.push('等候時間較長');
+  if(/貴|價格高/.test(allText))negThemes.push('價格偏高');
+  if(/停車|車位/.test(allText))negThemes.push('停車不便');
+  if(/態度|冷漠/.test(allText))negThemes.push('服務態度待改善');
+  var conclusion=storeRating>=4.7?'本店整體表現優異，顧客滿意度達'+posRate+'%，為區域標竿門市。':storeRating>=4.3?'本店表現穩定，正評率'+posRate+'%。建議針對負評進行改善提升整體評分。':'本店有改善空間，正評率'+posRate+'%，建議區域負責人進行實地稽核。';
+  return{reviews:analyzed,summary:{top_pros:themes.length>0?themes.slice(0,3):['服務人員親切','環境整潔','商品齊全'],top_cons:negThemes.length>0?negThemes.slice(0,2):(neg.length>0?['部分顧客有改善建議']:['暫無明顯缺點']),top_tips:negThemes.length>0?['加強員工培訓','優化服務流程']:['持續維持現有水準','鼓勵顧客留下評論'],conclusion:conclusion}};
+}
+
+function renderModal(storeName,regionName,url,rating,count,reviews,analysis){
+  var aMap={};
+  if(analysis&&analysis.reviews)analysis.reviews.forEach(function(a){aMap[a.index-1]=a;});
+  var enriched=reviews.slice(0,15).map(function(r,i){return Object.assign({},r,{analysis:aMap[i]||{sentiment:r.rating>=4?'positive':r.rating>=3?'neutral':'negative',pros:null,cons:null,tip:null}});});
+  var pos=enriched.filter(function(r){return r.analysis.sentiment==='positive';}).length;
+  var neu=enriched.filter(function(r){return r.analysis.sentiment==='neutral';}).length;
+  var neg=enriched.filter(function(r){return r.analysis.sentiment==='negative';}).length;
+  var sum=analysis?analysis.summary:{};
+  document.getElementById('mSub').textContent=regionName+' · ⭐'+rating+' · 已抓取 '+enriched.length+' 則真實評論 · 🟢'+pos+' 🟡'+neu+' 🔴'+neg;
+  var html='<div class="src-badge">✅ 真實 Google Maps 評論 · 即時抓取 · '+new Date().toLocaleDateString('zh-TW')+'</div>';
+  html+='<div class="mtabs"><div class="mtab active" onclick="swTab(this,this.dataset.t)" data-t="ta">全部('+enriched.length+')</div>';
+  html+='<div class="mtab" onclick="swTab(this,this.dataset.t)" data-t="tp">🟢 正評('+pos+')</div>';
+  html+='<div class="mtab" onclick="swTab(this,this.dataset.t)" data-t="tn">🟡 中性('+neu+')</div>';
+  html+='<div class="mtab" onclick="swTab(this,this.dataset.t)" data-t="tg">🔴 負評('+neg+')</div>';
+  html+='<div class="mtab" onclick="swTab(this,this.dataset.t)" data-t="ts">📊 分析摘要</div></div>';
+  html+='<div id="ta">'+enriched.map(function(r,i){return rvCard(r,i);}).join('')+'</div>';
+  html+='<div id="tp" style="display:none">'+enriched.filter(function(r){return r.analysis.sentiment==='positive';}).map(function(r,i){return rvCard(r,i);}).join('')+'</div>';
+  html+='<div id="tn" style="display:none">'+enriched.filter(function(r){return r.analysis.sentiment==='neutral';}).map(function(r,i){return rvCard(r,i);}).join('')+'</div>';
+  html+='<div id="tg" style="display:none">'+enriched.filter(function(r){return r.analysis.sentiment==='negative';}).map(function(r,i){return rvCard(r,i);}).join('')+'</div>';
+  html+='<div id="ts" style="display:none">';
+  html+='<div class="sum-box"><div class="sum-grid">';
+  html+='<div class="sum-col p"><h4>✅ 主要優點</h4><ul>'+(sum.top_pros||[]).map(function(p){return '<li>'+p+'</li>';}).join('')+'</ul></div>';
+  html+='<div class="sum-col c"><h4>⚠️ 主要缺點</h4><ul>'+(sum.top_cons||[]).map(function(c){return '<li>'+c+'</li>';}).join('')+'</ul></div>';
+  html+='<div class="sum-col t"><h4>🚀 改善建議</h4><ul>'+(sum.top_tips||[]).map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>';
+  html+='</div></div>';
+  html+='<div style="background:var(--surface);border-radius:10px;padding:16px;border:1px solid var(--border)">';
+  html+='<div style="font-size:.82rem;font-weight:800;margin-bottom:10px;color:#1e40af">🎯 整體結論</div>';
+  html+='<p style="font-size:.82rem;color:var(--text);line-height:1.75">'+(sum.conclusion||'基於真實評論分析，此門市整體表現穩定。')+'</p>';
+  html+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><a href="'+url+'" target="_blank" style="color:#1e40af;font-size:.74rem;text-decoration:none">🔗 前往 Google Maps 查看「'+storeName+'」完整評論 →</a></div></div></div>';
+  document.getElementById('mBody').innerHTML=html;
+}
+
+function rvCard(r,i){
+  var a=r.analysis;
+  var sc=r.rating>=4?'#d97706':r.rating>=3?'#f59e0b':'#dc2626';
+  var badge=a.sentiment==='positive'?'✅ 正評':a.sentiment==='neutral'?'🟡 中性':'❌ 負評';
+  var stars='';for(var k=0;k<(r.rating||0);k++)stars+='★';for(var k=0;k<5-(r.rating||0);k++)stars+='☆';
+  var guide=r.user&&r.user.local_guide?' · 在地嚮導':'';
+  var rcnt=r.user&&r.user.reviews?' · '+r.user.reviews+'則評論':'';
+  var html='<div class="rv '+a.sentiment+'">';
+  html+='<div class="rv-top"><div><div class="rv-author">'+(r.user&&r.user.name?r.user.name:'匿名用戶')+'</div><div class="rv-meta-row">'+guide+rcnt+'</div></div>';
+  html+='<div class="rv-meta"><span class="rv-stars" style="color:'+sc+'">'+stars+'</span><span class="rv-date">'+(r.date||'')+'</span><span class="sbadge '+a.sentiment+'">'+badge+'</span></div></div>';
+  html+='<div class="rv-text">'+(r.snippet||r.text||'（此評論無文字內容）')+'</div>';
+  html+='<div class="rv-ana">';
+  if(a.pros&&a.sentiment!=='negative')html+='<div class="av"><span class="al p">✅ 優點</span><span class="ac">'+a.pros+'</span></div>';
+  if(a.cons)html+='<div class="av"><span class="al c">⚠️ 缺點</span><span class="ac">'+a.cons+'</span></div>';
+  if(a.tip)html+='<div class="av"><span class="al t">💡 建議</span><span class="ac">'+a.tip+'</span></div>';
+  if(!a.pros&&!a.cons&&!a.tip)html+='<div style="font-size:.74rem;color:var(--muted)">✨ 顧客滿意，無特別缺點</div>';
+  html+='</div></div>';
+  return html;
+}
+
+function swTab(el,id){
+  document.querySelectorAll('.mtab').forEach(function(t){t.classList.remove('active');});
+  el.classList.add('active');
+  var tabs=['ta','tp','tn','tg','ts'];
+  tabs.forEach(function(t){var e=document.getElementById(t);if(e)e.style.display=(t===id?'':'none');});
+}
+
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===e.currentTarget)closeModal();});
+
+
 function buildSidebar(){
   var html='<div class="sb-sec">📊 總覽</div>';
   html+='<div class="sb-item active" onclick="showView(\'overview\')" id="sb-overview"><div class="sb-dot" style="background:var(--accent)"></div><span class="sb-name">全台統計總覽</span></div>';
