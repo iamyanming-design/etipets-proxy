@@ -986,21 +986,6 @@ function loadRegionSummary(region){
   html+='</ul></div>';
 
   html+='</div>';
-  // ── 關鍵字區塊（靜態預設）──
-  var kd = REGION_KW[region.id] || {posHtml:'',negHtml:'',posSrc:'',negSrc:''};
-  html += '<div style="margin-top:16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.06)">';
-  html += '<div style="font-size:.8rem;font-weight:800;color:#1e293b;margin-bottom:4px">🔑 評論關鍵字分析</div>';
-  html += '<div style="font-size:.65rem;color:#64748b;margin-bottom:14px">正評：評論數最多3店 · 負評：評分最低3店 · 資料依最新更新為準</div>';
-  html += '<div style="display:flex;flex-direction:column;gap:13px">';
-  html += '<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">';
-  html += '<span style="font-size:.72rem;font-weight:800;color:#065f46;white-space:nowrap;padding-top:5px;min-width:70px">🟢 正評關鍵字</span>';
-  html += '<div style="flex:1"><div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:5px">'+kd.posHtml+'</div>';
-  html += '<div style="font-size:.63rem;color:#94a3b8">分析來源（評論數最多）：'+kd.posSrc+'</div></div></div>';
-  html += '<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">';
-  html += '<span style="font-size:.72rem;font-weight:800;color:#991b1b;white-space:nowrap;padding-top:5px;min-width:70px">🔴 負評關鍵字</span>';
-  html += '<div style="flex:1"><div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:5px">'+kd.negHtml+'</div>';
-  html += '<div style="font-size:.63rem;color:#94a3b8">分析來源（評分最低）：'+kd.negSrc+'</div></div></div>';
-  html += '</div></div>';
 
   el.innerHTML = html;
 }
@@ -1090,6 +1075,10 @@ function renderRegion(el,rid){
     loadRegionSummary(region);
   },80);
 }
+
+
+
+
 
 function renderGrowth(el){
   var t1='2025/02/11', t2='2026/05/14';
@@ -1355,22 +1344,6 @@ function renderRanking(el){
   html+='<div class="dtable"><table><thead><tr><th>排名</th><th>門市</th><th>區域</th><th>評分</th><th>評論數</th><th></th></tr></thead><tbody>';
   html+=byC.slice(0,15).map(tRow).join('');
   html+='</tbody></table></div>';
-  // ── 關鍵字區塊（靜態預設）──
-  var kd = REGION_KW[region.id] || {posHtml:'',negHtml:'',posSrc:'',negSrc:''};
-  html += '<div style="margin-top:16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.06)">';
-  html += '<div style="font-size:.8rem;font-weight:800;color:#1e293b;margin-bottom:4px">🔑 評論關鍵字分析</div>';
-  html += '<div style="font-size:.65rem;color:#64748b;margin-bottom:14px">正評：評論數最多3店 · 負評：評分最低3店 · 資料依最新更新為準</div>';
-  html += '<div style="display:flex;flex-direction:column;gap:13px">';
-  html += '<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">';
-  html += '<span style="font-size:.72rem;font-weight:800;color:#065f46;white-space:nowrap;padding-top:5px;min-width:70px">🟢 正評關鍵字</span>';
-  html += '<div style="flex:1"><div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:5px">'+kd.posHtml+'</div>';
-  html += '<div style="font-size:.63rem;color:#94a3b8">分析來源（評論數最多）：'+kd.posSrc+'</div></div></div>';
-  html += '<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">';
-  html += '<span style="font-size:.72rem;font-weight:800;color:#991b1b;white-space:nowrap;padding-top:5px;min-width:70px">🔴 負評關鍵字</span>';
-  html += '<div style="flex:1"><div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:5px">'+kd.negHtml+'</div>';
-  html += '<div style="font-size:.63rem;color:#94a3b8">分析來源（評分最低）：'+kd.negSrc+'</div></div></div>';
-  html += '</div></div>';
-
   el.innerHTML = html;
 }
 
@@ -1431,6 +1404,108 @@ var REGION_KW = {
   },
 };
 
+
+
+
+
+function renderConclusion(el){
+  var allS=REGIONS.reduce(function(a,r){return a.concat(r.stores);},[]); 
+  var avgR=(allS.reduce(function(a,s){return a+s.rating;},0)/allS.length).toFixed(2);
+  var above48=allS.filter(function(s){return s.rating>=4.8;}).length;
+  var below44=allS.filter(function(s){return s.rating<4.4;}).length;
+  var best=REGIONS.map(function(r){return{r:r,a:rAvg(r)};}).sort(function(a,b){return b.a.avg-a.a.avg;})[0];
+  var worst=REGIONS.map(function(r){return{r:r,a:rAvg(r)};}).sort(function(a,b){return a.a.avg-b.a.avg;})[0];
+  var totalC2605=GROWTH_DATA.reduce(function(a,r){return a+r.stores.reduce(function(b,s){return b+s.c2605;},0);},0);
+  var totalC2502=GROWTH_DATA.reduce(function(a,r){return a+r.stores.reduce(function(b,s){return b+s.c2502;},0);},0);
+  var totalGrowth=totalC2605-totalC2502;
+  var growthPct=Math.round(totalGrowth/totalC2502*100);
+  var html='<div class="sec-title">📋 全台結論與改善建議</div>';
+  html+='<div class="stats">';
+  html+='<div class="stat gold"><div class="stat-lbl">全台平均評分</div><div class="stat-val">'+avgR+'</div><div class="stat-sub">較前期 +0.21 分進步</div></div>';
+  html+='<div class="stat grn"><div class="stat-lbl">4.8分以上優質門市</div><div class="stat-val">'+above48+'</div><div class="stat-sub">佔全台 '+Math.round(above48/allS.length*100)+'%</div></div>';
+  html+='<div class="stat red"><div class="stat-lbl">4.4分以下待加強</div><div class="stat-val">'+below44+'</div><div class="stat-sub">需優先輔導改善</div></div>';
+  html+='<div class="stat blu"><div class="stat-lbl">評論總成長</div><div class="stat-val">+'+growthPct+'%</div><div class="stat-sub">+'+totalGrowth.toLocaleString()+' 則評論</div></div>';
+  html+='</div>';
+  html+='<div class="charts">';
+  html+='<div class="chart-box"><h3>各區評分雷達圖</h3><canvas id="cRad" style="max-height:250px"></canvas></div>';
+  html+='<div class="chart-box"><h3>評分分布（門市數量）</h3><canvas id="cDist"></canvas></div>';
+  html+='</div>';
+  var allSR=REGIONS.reduce(function(a,r){return a.concat(r.stores.map(function(s){return Object.assign({},s,{region:r});}));}, []);
+  var avgCount=allSR.reduce(function(a,s){return a+s.count;},0)/allSR.length;
+  var avgRating=parseFloat(avgR);
+  var q1=allSR.filter(function(s){return s.rating>=avgRating&&s.count>=avgCount;});
+  var q2=allSR.filter(function(s){return s.rating<avgRating&&s.count>=avgCount;});
+  var q3=allSR.filter(function(s){return s.rating>=avgRating&&s.count<avgCount;});
+  var q4=allSR.filter(function(s){return s.rating<avgRating&&s.count<avgCount;});
+  html+='<div class="sec-title">🎯 門市四象限分析 <span style="font-size:.7rem;color:var(--muted);font-weight:400">均分'+avgR+'分、均量'+Math.round(avgCount)+'則為分界</span></div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">';
+  var quads=[
+    {title:'⭐ 標竿門市',sub:'高評分 × 高聲量',bg:'#f0fdf4',border:'#86efac',color:'#065f46',stores:q1,tip:'維持現狀，推廣 SOP'},
+    {title:'⚠️ 優先改善',sub:'低評分 × 高聲量',bg:'#fef2f2',border:'#fca5a5',color:'#991b1b',stores:q2,tip:'聲量大影響廣，優先稽核'},
+    {title:'💎 潛力門市',sub:'高評分 × 低聲量',bg:'#eff6ff',border:'#93c5fd',color:'#1e40af',stores:q3,tip:'品質佳但曝光少，加強引導留評'},
+    {title:'🔧 需要關注',sub:'低評分 × 低聲量',bg:'#fefce8',border:'#fde047',color:'#92400e',stores:q4,tip:'評分聲量雙低，了解根本原因'},
+  ];
+  quads.forEach(function(q){
+    html+='<div style="background:'+q.bg+';border:2px solid '+q.border+';border-radius:12px;padding:16px">';
+    html+='<div style="font-size:.85rem;font-weight:800;color:'+q.color+';margin-bottom:3px">'+q.title+'</div>';
+    html+='<div style="font-size:.68rem;color:var(--muted);margin-bottom:8px">'+q.sub+' · 共 '+q.stores.length+' 間</div>';
+    html+='<div style="font-size:.75rem;color:var(--text);margin-bottom:8px;font-style:italic">→ '+q.tip+'</div>';
+    if(q.stores.length>0){
+      html+='<div style="font-size:.72rem;color:'+q.color+';line-height:1.8">';
+      q.stores.slice(0,5).forEach(function(s){html+=s.name+'（'+s.rating+'｜'+s.count+'則）<br>';});
+      if(q.stores.length>5)html+='...等共'+q.stores.length+'間';
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+  html+='</div>';
+  html+='<div class="concl"><div style="font-size:.95rem;font-weight:800;margin-bottom:16px">🎯 整體分析結論</div><div class="cg">';
+  html+='<div class="cs s"><h4>✅ 全台優勢</h4><ul class="cl">';
+  html+='<li>全台均分 '+avgR+'，整體口碑優良</li>';
+  html+='<li>'+above48+' 家門市達 4.8 分以上</li>';
+  html+='<li>'+best.r.name+'（'+best.r.manager+'）表現最佳，均分 '+best.a.avg.toFixed(2)+'</li>';
+  html+='<li>評論總數成長 +'+growthPct+'%，顧客互動熱絡</li>';
+  html+='<li>宜花區、中投區評分成長幅度最大</li>';
+  html+='</ul></div>';
+  html+='<div class="cs w"><h4>⚠️ 需改善問題</h4><ul class="cl">';
+  html+='<li>'+below44+' 家門市低於 4.4 分</li>';
+  html+='<li>士林文林二店評分異常（1.0），需查明原因</li>';
+  html+='<li>'+worst.r.name+'（'+worst.r.manager+'）均分最低</li>';
+  html+='<li>高聲量低評分門市負評影響範圍廣</li>';
+  html+='<li>各區服務品質參差不齊，SOP 需統一</li>';
+  html+='</ul></div>';
+  html+='<div class="cs i"><h4>💡 改善策略</h4><ul class="cl">';
+  html+='<li>低評分門市安排實地稽核與人員培訓</li>';
+  html+='<li>以標竿門市服務 SOP 複製至弱勢門市</li>';
+  html+='<li>建立 Google 負評主動回覆機制</li>';
+  html+='<li>高聲量低評分門市設為優先輔導對象</li>';
+  html+='<li>推動顧客留評激勵計畫</li>';
+  html+='</ul></div>';
+  html+='<div class="cs n"><h4>🚀 短中期行動</h4><ul class="cl">';
+  html+='<li>【即期】士林文林二店查明評分異常原因</li>';
+  html+='<li>【即期】'+below44+'家低評分門市排定稽核</li>';
+  html+='<li>【短期】建立月度評分變化預警機制</li>';
+  html+='<li>【短期】標竿門市 SOP 文件化推廣計畫</li>';
+  html+='<li>【中期】全台服務品質統一培訓計畫</li>';
+  html+='</ul></div></div></div>';
+  html+='<div class="sec-title">📊 各區評比（按評分排序）</div>';
+  html+='<div class="rtable"><div class="rt-row rt-head"><div>區域 / 負責人</div><div>情感分布</div><div style="text-align:right">平均評分</div><div style="text-align:center">門市數</div></div>';
+  REGIONS.slice().sort(function(a,b){return rAvg(b).avg-rAvg(a).avg;}).forEach(function(r){
+    var a=rAvg(r);
+    html+='<div class="rt-row"><div><div class="rt-name" style="color:'+r.color+'" onclick="showView(\'region\',\''+r.id+'\')">' +r.name+'</div><div style="font-size:.65rem;color:var(--muted)">'+r.manager+' 區</div></div>';
+    html+='<div><div class="rt-bar"><div class="bp" style="width:'+a.pos+'%"></div><div class="bn" style="width:'+a.neu+'%"></div><div class="br" style="width:'+a.neg+'%"></div></div>';
+    html+='<div style="font-size:.6rem;margin-top:3px;font-weight:600"><span style="color:#065f46">●'+a.pos+'%</span> <span style="color:#92400e">●'+a.neu+'%</span> <span style="color:#991b1b">●'+a.neg+'%</span></div></div>';
+    html+='<div class="rt-rating" style="color:'+r.color+'">'+a.avg.toFixed(2)+' ⭐</div><div class="rt-stores">'+r.stores.length+'</div></div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
+  setTimeout(function(){
+    mkChart('cRad','radar',{labels:REGIONS.map(function(r){return r.name;}),datasets:[{label:'平均評分',data:REGIONS.map(function(r){return rAvg(r).avg;}),fill:true,backgroundColor:'rgba(245,158,11,0.15)',borderColor:'#f59e0b',pointBackgroundColor:'#f59e0b'}]},{scales:{r:{min:3.8,max:5.1,grid:{color:'rgba(0,0,0,0.08)'},pointLabels:{color:'#1e293b',font:{size:11}},ticks:{display:false}}}});
+    var bins=[{l:'< 4.0',mn:0,mx:3.99},{l:'4.0-4.2',mn:4.0,mx:4.29},{l:'4.3-4.4',mn:4.3,mx:4.49},{l:'4.5-4.6',mn:4.5,mx:4.69},{l:'4.7-4.8',mn:4.7,mx:4.89},{l:'4.9-5.0',mn:4.9,mx:5.0}];
+    var allS2=REGIONS.reduce(function(a,r){return a.concat(r.stores);},[]); 
+    mkChart('cDist','bar',{labels:bins.map(function(b){return b.l;}),datasets:[{label:'門市數',data:bins.map(function(b){return allS2.filter(function(s){return s.rating>=b.mn&&s.rating<=b.mx;}).length;}),backgroundColor:['#ef444488','#f9731688','#f59e0b88','#10b98188','#6366f188','#a855f788'],borderColor:['#ef4444','#f97316','#f59e0b','#10b981','#6366f1','#a855f7'],borderWidth:2,borderRadius:4}]});
+  },80);
+}
 
 
 buildSidebar();
