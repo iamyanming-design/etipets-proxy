@@ -987,6 +987,25 @@ function loadRegionSummary(region){
 
   html+='</div>';
 
+  
+  // ── 關鍵字分析區塊（靜態預設，不消耗 SerpApi 額度）──
+  var kd = REGION_KW[region.id];
+  if(kd){
+    html += '<div style="margin-top:16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.06)">';
+    html += '<div style="font-size:.8rem;font-weight:800;color:#1e293b;margin-bottom:4px">🔑 評論關鍵字分析</div>';
+    html += '<div style="font-size:.65rem;color:#64748b;margin-bottom:14px">正評：評論數最多3店 · 負評：評分最低3店 · 靜態預設，資料更新時同步更新</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:13px">';
+    html += '<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">';
+    html += '<span style="font-size:.72rem;font-weight:800;color:#065f46;white-space:nowrap;padding-top:5px;min-width:70px">🟢 正評關鍵字</span>';
+    html += '<div style="flex:1"><div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:5px">'+kd.posHtml+'</div>';
+    html += '<div style="font-size:.63rem;color:#94a3b8">分析來源（評論數最多）：'+kd.posSrc+'</div></div></div>';
+    html += '<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">';
+    html += '<span style="font-size:.72rem;font-weight:800;color:#991b1b;white-space:nowrap;padding-top:5px;min-width:70px">🔴 負評關鍵字</span>';
+    html += '<div style="flex:1"><div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:5px">'+kd.negHtml+'</div>';
+    html += '<div style="font-size:.63rem;color:#94a3b8">分析來源（評分最低）：'+kd.negSrc+'</div></div></div>';
+    html += '</div></div>';
+  }
+
   el.innerHTML = html;
 }
 
