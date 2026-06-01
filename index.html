@@ -860,35 +860,30 @@ function loadRegionSummary(region){
   var highStores=region.stores.filter(function(s){return s.rating>=4.7;});
   var lowStores=region.stores.filter(function(s){return s.rating<4.4;});
 
-  // 成長資料交叉比對（欄位名稱對應 GROWTH_DATA：c0514/c0601/r0514/r0601）
-  var cF='c0514', cT='c0601', rF='r0514', rT='r0601'; // 最近兩個時間點
-  var EXCLUDED_NEW=['士林文林二店'];
-  var validG=gStores.filter(function(s){return !s.excluded&&s[cF]>0;});
-  var totalC2605=gStores.reduce(function(a,s){return a+s[cT];},0);
-  var totalC2502=gStores.reduce(function(a,s){return a+s[cF];},0);
+  // 成長資料交叉比對
+  var validG=gStores.filter(function(s){return s.c2502>0;});
+  var totalC2605=gStores.reduce(function(a,s){return a+s.c2605;},0);
+  var totalC2502=gStores.reduce(function(a,s){return a+s.c2502;},0);
   var totalGrowth=totalC2605-totalC2502;
   var growthPct=totalC2502>0?Math.round(totalGrowth/totalC2502*100):0;
-  var avgR2605=gStores.length>0?gStores.reduce(function(a,s){return a+s[rT];},0)/gStores.length:avgR;
-  var avgR2502=validG.length>0?validG.reduce(function(a,s){return a+s[rF];},0)/validG.length:avgR;
+  var avgR2605=gStores.length>0?gStores.reduce(function(a,s){return a+s.r2605;},0)/gStores.length:avgR;
+  var avgR2502=validG.length>0?validG.reduce(function(a,s){return a+s.r2502;},0)/validG.length:avgR;
   var rGrowth=parseFloat((avgR2605-avgR2502).toFixed(2));
 
   // 成長最多門市
-  var topGrowthStore=gStores.filter(function(s){return !s.excluded;}).slice().sort(function(a,b){
-    return (b[cT]-b[cF])-(a[cT]-a[cF]);
-  })[0];
+  var topGrowthStore=gStores.slice().sort(function(a,b){return b.cDiff-a.cDiff||b.cPct-a.cPct;})[0];
   // 評分下滑門市（評分退步）
-  var declineStores=gStores.filter(function(s){
-    return !s.excluded&&s[cF]>0&&parseFloat((s[rT]-s[rF]).toFixed(1))<-0.05;
-  });
+  var declineStores=gStores.filter(function(s){return s.rDiff<-0.05&&s.c2502>0;});
   // 評分進步門市
-  var improvedStores=gStores.filter(function(s){
-    return !s.excluded&&s[cF]>0&&parseFloat((s[rT]-s[rF]).toFixed(1))>0.05;
-  });
+  var improvedStores=gStores.filter(function(s){return s.rDiff>0.05&&s.c2502>0;});
   // 高聲量低評分
   var highVolLowScore=region.stores.filter(function(s){return s.count>500&&s.rating<4.5;});
   // 新開門市
+  // c2502=0 可能是統計遺漏的舊門市，不全部視為新門市
+  // 以評論數少（c2605<100）且評分極低（r2605<2）視為異常，排除於新門市之外
+  var EXCLUDED_NEW=['士林文林二店']; // 已知統計遺漏的舊門市
   var newStores=gStores.filter(function(s){
-    return s[cF]===0 && EXCLUDED_NEW.indexOf(s.name)<0;
+    return s.c2502===0 && EXCLUDED_NEW.indexOf(s.name)<0;
   });
 
   // ── 正評優點（結合評分與成長資料）──
@@ -900,9 +895,9 @@ function loadRegionSummary(region){
   if(rGrowth>0)
     pros.push('區域平均評分由 '+avgR2502.toFixed(2)+' 升至 '+avgR2605.toFixed(2)+'（+'+rGrowth+'），整體品質進步');
   if(improvedStores.length>0)
-    pros.push('評分提升門市：'+improvedStores.slice(0,3).map(function(s){return s.name+'(+'+(s[rT]-s[rF]).toFixed(1)+')';}).join('、')+'，改善成效顯著');
-  if(topGrowthStore&&(topGrowthStore[cT]-topGrowthStore[cF])>50)
-    pros.push('評論成長最多：'+topGrowthStore.name+'（+'+(topGrowthStore[cT]-topGrowthStore[cF])+'則），顧客回饋活躍');
+    pros.push('評分提升門市：'+improvedStores.slice(0,3).map(function(s){return s.name+'(+'+s.rDiff+')';}).join('、')+'，改善成效顯著');
+  if(topGrowthStore&&topGrowthStore.cDiff>50)
+    pros.push('評論成長最多：'+topGrowthStore.name+'（+'+topGrowthStore.cDiff+'則），顧客回饋活躍');
   pros=pros.filter(function(p){return p;}).slice(0,5);
   if(pros.length===0) pros.push('整體表現穩定，維持良好口碑');
 
@@ -911,7 +906,7 @@ function loadRegionSummary(region){
   if(lowStores.length>0)
     cons.push('低評分門市需優先關注：'+lowStores.map(function(s){return s.name+'（'+s.rating+'）';}).join('、'));
   if(declineStores.length>0)
-    cons.push('評分退步門市：'+declineStores.slice(0,3).map(function(s){return s.name+'（'+(s[rT]-s[rF]).toFixed(1)+'）';}).join('、')+'，需查明原因');
+    cons.push('評分退步門市：'+declineStores.slice(0,3).map(function(s){return s.name+'（'+s.rDiff+'）';}).join('、')+'，需查明原因');
   if(highVolLowScore.length>0)
     cons.push('高聲量但評分偏低：'+highVolLowScore.map(function(s){return s.name+'（'+s.rating+'，'+s.count+'則）';}).join('、')+'，負評影響廣');
   if(rGrowth<0)
@@ -1214,78 +1209,6 @@ function renderGrowth(el){
     html+='</div>';
     html+='</div>';
 
-    // 各區頁籤（各店明細）
-    GROWTH_DATA.forEach(function(r){
-      var vStores=r.stores.filter(function(s){return s[cF]>0;});
-      var rC2=r.stores.reduce(function(a,s){return a+s[cT];},0);
-      var rC1=r.stores.reduce(function(a,s){return a+s[cF];},0);
-      var rCDiff=rC2-rC1;
-      var rCPct=rC1>0?Math.round(rCDiff/rC1*100):0;
-      var avR2=r.stores.reduce(function(a,s){return a+s[rT];},0)/r.stores.length;
-      var avR1=vStores.length>0?vStores.reduce(function(a,s){return a+s[rF];},0)/vStores.length:avR2;
-      var avRD=parseFloat((avR2-avR1).toFixed(2));
-      var bestGrowth=r.stores.slice().sort(function(a,b){return (b[cT]-b[cF])-(a[cT]-a[cF])||((b[cF]>0?(b[cT]-b[cF])/b[cF]:0)-(a[cF]>0?(a[cT]-a[cF])/a[cF]:0));})[0];
-
-      html+='<div id="gcontent-'+r.id+'" style="display:none">';
-      html+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">';
-      html+='<div style="width:5px;height:42px;border-radius:3px;background:'+r.color+'"></div>';
-      html+='<div><h2 style="font-size:1.2rem;font-weight:800">'+r.name+' · '+r.manager+' 區</h2>';
-      html+='<p style="font-size:.73rem;color:var(--muted);margin-top:2px">'+t1+' → '+t2+'</p></div></div>';
-
-      html+='<div class="stats">';
-      html+='<div class="stat gold"><div class="stat-lbl">本區評論 ('+t2+')</div><div class="stat-val">'+rC2.toLocaleString()+'</div><div class="stat-sub">較前期 '+(rCDiff>=0?'+':'')+rCDiff+'則</div></div>';
-      html+='<div class="stat grn"><div class="stat-lbl">評論成長數</div><div class="stat-val">'+(rCDiff>=0?'+':'')+rCDiff+'</div><div class="stat-sub">成長率 '+(rC1>0?(rCDiff>=0?'+':'')+rCPct+'%':'--')+'</div></div>';
-      html+='<div class="stat blu"><div class="stat-lbl">平均評分 ('+t2+')</div><div class="stat-val">'+avR2.toFixed(2)+'</div><div class="stat-sub">較前期 '+(avRD>=0?'+':'')+avRD+'分</div></div>';
-      html+='<div class="stat red"><div class="stat-lbl">成長則數最多</div><div class="stat-val" style="font-size:1.1rem">'+(bestGrowth?bestGrowth.name:'--')+'</div><div class="stat-sub">'+(bestGrowth?'+'+(bestGrowth[cT]-bestGrowth[cF])+'則':'--')+'</div></div>';
-      html+='</div>';
-
-      html+='<div class="sec-title">🏪 '+r.name+' 各店評論成長比較</div>';
-      html+='<div class="dtable"><table class="store-growth-table"><thead><tr>';
-      html+='<th>門市</th>';
-      html+='<th style="text-align:right">'+t1+' 評分</th><th style="text-align:right">'+t2+' 評分</th><th style="text-align:center">評分變化</th>';
-      html+='<th style="text-align:right">'+t1+' 評論數</th><th style="text-align:right">'+t2+' 評論數</th>';
-      html+='<th style="text-align:right">成長則數</th><th style="text-align:center">成長率</th><th></th>';
-      html+='</tr></thead><tbody>';
-
-      r.stores.slice().sort(function(a,b){return (b[cT]-b[cF])-(a[cT]-a[cF]);}).forEach(function(s){
-        var isNew=s[cF]===0&&EXCL.indexOf(s.name)<0;
-        var sDiff=s[cT]-s[cF];
-        var sPct=s[cF]>0?Math.round(sDiff/s[cF]*100):0;
-        var sRD=s[cF]>0?parseFloat((s[rT]-s[rF]).toFixed(1)):null;
-        html+='<tr>';
-        html+='<td style="font-weight:700">'+(isNew?'<span style="background:#dbeafe;color:#1e40af;font-size:.6rem;padding:1px 5px;border-radius:3px;font-weight:700;margin-right:4px">NEW</span>':'')+s.name+'</td>';
-        html+='<td style="text-align:right;color:var(--muted)">'+(s[cF]>0?s[rF]:'--')+'</td>';
-        html+='<td style="text-align:right;font-weight:700;color:#1e40af">'+s[rT]+'</td>';
-        html+='<td style="text-align:center">'+(isNew?'<span style="background:#dbeafe;color:#1e40af;font-size:.65rem;padding:2px 8px;border-radius:10px;font-weight:700">新門市</span>':rBadge(sRD||0))+'</td>';
-        html+='<td style="text-align:right;color:var(--muted)">'+(s[cF]>0?s[cF].toLocaleString():'--')+'</td>';
-        html+='<td style="text-align:right;font-weight:700">'+s[cT].toLocaleString()+'</td>';
-        html+='<td style="text-align:right;color:#059669;font-weight:700">'+(sDiff>=0?'+':'')+sDiff+'</td>';
-        html+='<td style="text-align:center">'+(isNew?'<span style="background:#dbeafe;color:#1e40af;font-size:.65rem;padding:2px 8px;border-radius:10px;font-weight:700">新門市</span>':cBadge(sDiff,sPct)+' <span style="font-size:.7rem;color:var(--muted)">'+(s[cF]>0?(sPct>=0?'+':'')+sPct+'%':'--')+'</span>')+'</td>';
-        html+='<td><a href="'+s.url+'" target="_blank" style="color:#1e40af;font-size:.7rem;text-decoration:none">🔗</a></td>';
-        html+='</tr>';
-      });
-      html+='</tbody></table>';
-
-      // 手機版卡片
-      html+='<div class="growth-cards">';
-      r.stores.slice().sort(function(a,b){return (b[cT]-b[cF])-(a[cT]-a[cF]);}).forEach(function(s){
-        var isNew=s[cF]===0&&EXCL.indexOf(s.name)<0;
-        var sDiff=s[cT]-s[cF];
-        var sPct=s[cF]>0?Math.round(sDiff/s[cF]*100):0;
-        var sRD=s[cF]>0?parseFloat((s[rT]-s[rF]).toFixed(1)):null;
-        html+='<div class="gc"><div class="gc-head"><div class="gc-name">'+(isNew?'<span style="background:#dbeafe;color:#1e40af;font-size:.6rem;padding:1px 5px;border-radius:3px;font-weight:700;margin-right:4px">NEW</span>':'')+s.name+'</div><a href="'+s.url+'" target="_blank" style="color:#1e40af;font-size:.8rem">🔗</a></div>';
-        html+='<div class="gc-grid">';
-        html+='<div class="gc-item"><div class="gc-lbl">評論成長</div><div class="gc-val gc-diff '+(sDiff>=0?'pos':'neg')+'">'+(sDiff>=0?'+':'')+sDiff+'則</div>'+(s[cF]>0?'<div style="font-size:.68rem;color:#059669">'+(sPct>=0?'+':'')+sPct+'%</div>':'')+'</div>';
-        html+='<div class="gc-item"><div class="gc-lbl">現有評論數</div><div class="gc-val">'+s[cT].toLocaleString()+'</div>'+(s[cF]>0?'<div style="font-size:.68rem;color:var(--muted)">前期 '+s[cF]+'</div>':'')+'</div>';
-        html+='<div class="gc-item"><div class="gc-lbl">評分（'+t2+'）</div><div class="gc-val" style="color:#1e40af">'+s[rT]+'</div></div>';
-        html+='<div class="gc-item"><div class="gc-lbl">評分變化</div><div class="gc-val gc-diff '+(isNew?'neu':sRD===null?'neu':sRD>0?'pos':sRD<0?'neg':'neu')+'">'+(isNew?'新門市':sRD===null?'--':sRD>0?'▲ +'+sRD:sRD<0?'▼ '+sRD:'－ 持平')+'</div></div>';
-        html+='</div></div>';
-      });
-      html+='</div>';
-      html+='</div>';
-      html+='<canvas id="gchart-'+r.id+'" style="margin-top:18px;max-height:220px"></canvas>';
-      html+='</div>';
-    });
 
     return html;
   }
@@ -1331,7 +1254,82 @@ function renderGrowth(el){
     html+=renderContent(selFrom, selTo);
     html+='</div>';
 
+
     el.innerHTML=html;
+
+    // 各區頁籤（各店明細）— innerHTML 設定後再用 DOM 直接 appendChild
+    (function(){
+      var rF2=getRKey(selFrom), cF2=getCKey(selFrom), rT2=getRKey(selTo), cT2=getCKey(selTo);
+      var t1b=getLabel(selFrom), t2b=getLabel(selTo);
+      var EXCL2=['士林文林二店'];
+      GROWTH_DATA.forEach(function(r){
+        var vStores=r.stores.filter(function(s){return !s.excluded&&s[cF2]>0;});
+        var rC2=r.stores.reduce(function(a,s){return a+s[cT2];},0);
+        var rC1=r.stores.reduce(function(a,s){return a+s[cF2];},0);
+        var rCDiff=rC2-rC1;
+        var rCPct=rC1>0?Math.round(rCDiff/rC1*100):0;
+        var avR2=r.stores.reduce(function(a,s){return a+s[rT2];},0)/r.stores.length;
+        var avR1=vStores.length>0?vStores.reduce(function(a,s){return a+s[rF2];},0)/vStores.length:avR2;
+        var avRD=parseFloat((avR2-avR1).toFixed(2));
+        var bestGrowth=r.stores.slice().sort(function(a,b){return (b[cT2]-b[cF2])-(a[cT2]-a[cF2]);})[0];
+
+        var rh='<div id="gcontent-'+r.id+'" style="display:none">';
+        rh+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">';
+        rh+='<div style="width:5px;height:42px;border-radius:3px;background:'+r.color+'"></div>';
+        rh+='<div><h2 style="font-size:1.2rem;font-weight:800">'+r.name+' · '+r.manager+' 區</h2>';
+        rh+='<p style="font-size:.73rem;color:var(--muted);margin-top:2px">'+t1b+' → '+t2b+'</p></div></div>';
+        rh+='<div class="stats">';
+        rh+='<div class="stat gold"><div class="stat-lbl">本區評論 ('+t2b+')</div><div class="stat-val">'+rC2.toLocaleString()+'</div><div class="stat-sub">較前期 '+(rCDiff>=0?'+':'')+rCDiff+'則</div></div>';
+        rh+='<div class="stat grn"><div class="stat-lbl">評論成長數</div><div class="stat-val">'+(rCDiff>=0?'+':'')+rCDiff+'</div><div class="stat-sub">成長率 '+(rC1>0?(rCDiff>=0?'+':'')+rCPct+'%':'--')+'</div></div>';
+        rh+='<div class="stat blu"><div class="stat-lbl">平均評分 ('+t2b+')</div><div class="stat-val">'+avR2.toFixed(2)+'</div><div class="stat-sub">較前期 '+(avRD>=0?'+':'')+avRD+'分</div></div>';
+        rh+='<div class="stat red"><div class="stat-lbl">成長則數最多</div><div class="stat-val" style="font-size:1.1rem">'+(bestGrowth?bestGrowth.name:'--')+'</div><div class="stat-sub">'+(bestGrowth?'+'+(bestGrowth[cT2]-bestGrowth[cF2])+'則':'--')+'</div></div>';
+        rh+='</div>';
+        rh+='<div class="sec-title">🏪 '+r.name+' 各店評論成長比較</div>';
+        rh+='<div class="dtable"><table class="store-growth-table"><thead><tr>';
+        rh+='<th>門市</th><th style="text-align:right">'+t1b+' 評分</th><th style="text-align:right">'+t2b+' 評分</th><th style="text-align:center">評分變化</th>';
+        rh+='<th style="text-align:right">'+t1b+' 評論數</th><th style="text-align:right">'+t2b+' 評論數</th>';
+        rh+='<th style="text-align:right">成長則數</th><th style="text-align:center">成長率</th><th></th>';
+        rh+='</tr></thead><tbody>';
+        r.stores.slice().sort(function(a,b){return (b[cT2]-b[cF2])-(a[cT2]-a[cF2]);}).forEach(function(s){
+          var isNew=s[cF2]===0&&EXCL2.indexOf(s.name)<0;
+          var sDiff=s[cT2]-s[cF2];
+          var sPct=s[cF2]>0?Math.round(sDiff/s[cF2]*100):0;
+          var sRD=s[cF2]>0?parseFloat((s[rT2]-s[rF2]).toFixed(1)):null;
+          rh+='<tr>';
+          rh+='<td style="font-weight:700">'+(isNew?'<span style="background:#dbeafe;color:#1e40af;font-size:.6rem;padding:1px 5px;border-radius:3px;font-weight:700;margin-right:4px">NEW</span>':'')+s.name+'</td>';
+          rh+='<td style="text-align:right;color:var(--muted)">'+(s[cF2]>0?s[rF2]:'--')+'</td>';
+          rh+='<td style="text-align:right;font-weight:700;color:#1e40af">'+s[rT2]+'</td>';
+          rh+='<td style="text-align:center">'+(isNew?'<span style="background:#dbeafe;color:#1e40af;font-size:.65rem;padding:2px 8px;border-radius:10px;font-weight:700">新門市</span>':rBadge(sRD||0))+'</td>';
+          rh+='<td style="text-align:right;color:var(--muted)">'+(s[cF2]>0?s[cF2].toLocaleString():'--')+'</td>';
+          rh+='<td style="text-align:right;font-weight:700">'+s[cT2].toLocaleString()+'</td>';
+          rh+='<td style="text-align:right;color:#059669;font-weight:700">'+(sDiff>=0?'+':'')+sDiff+'</td>';
+          rh+='<td style="text-align:center">'+(isNew?'<span style="background:#dbeafe;color:#1e40af;font-size:.65rem;padding:2px 8px;border-radius:10px;font-weight:700">新門市</span>':cBadge(sDiff,sPct)+' <span style="font-size:.7rem;color:var(--muted)">'+(s[cF2]>0?(sPct>=0?'+':'')+sPct+'%':'--')+'</span>')+'</td>';
+          rh+='<td><a href="'+s.url+'" target="_blank" style="color:#1e40af;font-size:.7rem;text-decoration:none">🔗</a></td>';
+          rh+='</tr>';
+        });
+        rh+='</tbody></table>';
+        rh+='<div class="growth-cards">';
+        r.stores.slice().sort(function(a,b){return (b[cT2]-b[cF2])-(a[cT2]-a[cF2]);}).forEach(function(s){
+          var isNew=s[cF2]===0&&EXCL2.indexOf(s.name)<0;
+          var sDiff=s[cT2]-s[cF2];
+          var sPct=s[cF2]>0?Math.round(sDiff/s[cF2]*100):0;
+          var sRD=s[cF2]>0?parseFloat((s[rT2]-s[rF2]).toFixed(1)):null;
+          rh+='<div class="gc"><div class="gc-head"><div class="gc-name">'+(isNew?'<span style="background:#dbeafe;color:#1e40af;font-size:.6rem;padding:1px 5px;border-radius:3px;font-weight:700;margin-right:4px">NEW</span>':'')+s.name+'</div><a href="'+s.url+'" target="_blank" style="color:#1e40af;font-size:.8rem">🔗</a></div>';
+          rh+='<div class="gc-grid">';
+          rh+='<div class="gc-item"><div class="gc-lbl">評論成長</div><div class="gc-val gc-diff '+(sDiff>=0?'pos':'neg')+'">'+(sDiff>=0?'+':'')+sDiff+'則</div>'+(s[cF2]>0?'<div style="font-size:.68rem;color:#059669">'+(sPct>=0?'+':'')+sPct+'%</div>':'')+'</div>';
+          rh+='<div class="gc-item"><div class="gc-lbl">現有評論數</div><div class="gc-val">'+s[cT2].toLocaleString()+'</div>'+(s[cF2]>0?'<div style="font-size:.68rem;color:var(--muted)">前期 '+s[cF2]+'</div>':'')+'</div>';
+          rh+='<div class="gc-item"><div class="gc-lbl">評分（'+t2b+'）</div><div class="gc-val" style="color:#1e40af">'+s[rT2]+'</div></div>';
+          rh+='<div class="gc-item"><div class="gc-lbl">評分變化</div><div class="gc-val gc-diff '+(isNew?'neu':sRD===null?'neu':sRD>0?'pos':sRD<0?'neg':'neu')+'">'+(isNew?'新門市':sRD===null?'--':sRD>0?'▲ +'+sRD:sRD<0?'▼ '+sRD:'－ 持平')+'</div></div>';
+          rh+='</div></div>';
+        });
+        rh+='</div>';
+        rh+='<canvas id="gchart-'+r.id+'" style="margin-top:18px;max-height:220px"></canvas>';
+        rh+='</div>';
+        var tmp=document.createElement('div');
+        tmp.innerHTML=rh;
+        el.appendChild(tmp.firstChild);
+      });
+    })();
 
     // 套用比較按鈕
     window.applyGrowthRange=function(){
@@ -1352,21 +1350,8 @@ function renderGrowth(el){
       var titleEl=document.querySelector('#growth-period-label');
       if(titleEl)titleEl.innerHTML='比較時段：<strong style="color:#1e40af">'+t1+'</strong> → <strong style="color:#059669">'+t2+'</strong>';
 
-      // 重建全台比較內容
-      var allDiv=document.getElementById('gcontent-all');
-      if(allDiv){
-        allDiv.innerHTML=renderContent(selFrom,selTo);
-      }
-      // 重建各區內容
-      GROWTH_DATA.forEach(function(r){
-        var rDiv=document.getElementById('gcontent-'+r.id);
-        if(rDiv&&rDiv.style.display!=='none'){
-          // 重建各區頁籤（重新呼叫 switchGrowthTab 重渲）
-          window.switchGrowthTab(r.id);
-        }
-      });
-      // 重新觸發圖表
-      window.switchGrowthTab('all');
+      // 重新完整渲染（all + 各區 div 都是同層，直接重建整個 content）
+      fullRender();
     };
 
     // 預設顯示全台
