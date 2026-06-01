@@ -1295,7 +1295,7 @@ function renderGrowth(el){
     html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px">';
     html+='<div>';
     html+='<div class="sec-title" style="margin-bottom:4px">📈 評論成長比較分析</div>';
-    html+='<div style="font-size:.78rem;color:var(--muted)">比較時段：<strong style="color:#1e40af">'+t1+'</strong> → <strong style="color:#059669">'+t2+'</strong></div>';
+    html+='<div id="growth-period-label" style="font-size:.78rem;color:var(--muted)">比較時段：<strong style="color:#1e40af">'+t1+'</strong> → <strong style="color:#059669">'+t2+'</strong></div>';
     html+='</div>';
     html+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06)">';
     html+='<div style="font-size:.72rem;font-weight:700;color:#64748b;margin-bottom:8px">🗓️ 選擇比較區間</div>';
@@ -1333,12 +1333,35 @@ function renderGrowth(el){
       var f=document.getElementById('growth-from').value;
       var t=document.getElementById('growth-to').value;
       if(f===t){alert('起迄時間不能相同！');return;}
-      // 確保 from < to
-      var fIdx=TIME_POINTS.findIndex(function(tp){return tp.key===f;});
-      var tIdx=TIME_POINTS.findIndex(function(tp){return tp.key===t;});
+      // 確保 from < to（時間順序）
+      var fIdx=-1,tIdx=-1;
+      for(var i=0;i<TIME_POINTS.length;i++){
+        if(TIME_POINTS[i].key===f)fIdx=i;
+        if(TIME_POINTS[i].key===t)tIdx=i;
+      }
       if(fIdx>tIdx){var tmp=f;f=t;t=tmp;}
       selFrom=f; selTo=t;
-      renderGrowth(el);
+
+      // 更新標題顯示
+      var t1=getLabel(selFrom), t2=getLabel(selTo);
+      var titleEl=document.querySelector('#growth-period-label');
+      if(titleEl)titleEl.innerHTML='比較時段：<strong style="color:#1e40af">'+t1+'</strong> → <strong style="color:#059669">'+t2+'</strong>';
+
+      // 重建全台比較內容
+      var allDiv=document.getElementById('gcontent-all');
+      if(allDiv){
+        allDiv.innerHTML=renderContent(selFrom,selTo);
+      }
+      // 重建各區內容
+      GROWTH_DATA.forEach(function(r){
+        var rDiv=document.getElementById('gcontent-'+r.id);
+        if(rDiv&&rDiv.style.display!=='none'){
+          // 重建各區頁籤（重新呼叫 switchGrowthTab 重渲）
+          window.switchGrowthTab(r.id);
+        }
+      });
+      // 重新觸發圖表
+      window.switchGrowthTab('all');
     };
 
     // 預設顯示全台
