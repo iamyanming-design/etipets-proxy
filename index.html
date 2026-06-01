@@ -1127,7 +1127,7 @@ function renderGrowth(el){
       var avR1=vStores.length>0?vStores.reduce(function(a,s){return a+s[rF];},0)/vStores.length:avR2;
       var rD=parseFloat((avR2-avR1).toFixed(2));
       return{r:r,c2:c2,c1:c1,cDiff:cDiff,cPct:cPct,avR2:avR2,avR1:avR1,rD:rD};
-    }).sort(function(a,b){return b.cPct-a.cPct;});
+    }).sort(function(a,b){return b.cDiff-a.cDiff||b.cPct-a.cPct;});
   }
 
   function rBadge(diff){
