@@ -860,30 +860,35 @@ function loadRegionSummary(region){
   var highStores=region.stores.filter(function(s){return s.rating>=4.7;});
   var lowStores=region.stores.filter(function(s){return s.rating<4.4;});
 
-  // 成長資料交叉比對
-  var validG=gStores.filter(function(s){return s.c2502>0;});
-  var totalC2605=gStores.reduce(function(a,s){return a+s.c2605;},0);
-  var totalC2502=gStores.reduce(function(a,s){return a+s.c2502;},0);
+  // 成長資料交叉比對（欄位名稱對應 GROWTH_DATA：c0514/c0601/r0514/r0601）
+  var cF='c0514', cT='c0601', rF='r0514', rT='r0601'; // 最近兩個時間點
+  var EXCLUDED_NEW=['士林文林二店'];
+  var validG=gStores.filter(function(s){return !s.excluded&&s[cF]>0;});
+  var totalC2605=gStores.reduce(function(a,s){return a+s[cT];},0);
+  var totalC2502=gStores.reduce(function(a,s){return a+s[cF];},0);
   var totalGrowth=totalC2605-totalC2502;
   var growthPct=totalC2502>0?Math.round(totalGrowth/totalC2502*100):0;
-  var avgR2605=gStores.length>0?gStores.reduce(function(a,s){return a+s.r2605;},0)/gStores.length:avgR;
-  var avgR2502=validG.length>0?validG.reduce(function(a,s){return a+s.r2502;},0)/validG.length:avgR;
+  var avgR2605=gStores.length>0?gStores.reduce(function(a,s){return a+s[rT];},0)/gStores.length:avgR;
+  var avgR2502=validG.length>0?validG.reduce(function(a,s){return a+s[rF];},0)/validG.length:avgR;
   var rGrowth=parseFloat((avgR2605-avgR2502).toFixed(2));
 
   // 成長最多門市
-  var topGrowthStore=gStores.slice().sort(function(a,b){return b.cDiff-a.cDiff||b.cPct-a.cPct;})[0];
+  var topGrowthStore=gStores.filter(function(s){return !s.excluded;}).slice().sort(function(a,b){
+    return (b[cT]-b[cF])-(a[cT]-a[cF]);
+  })[0];
   // 評分下滑門市（評分退步）
-  var declineStores=gStores.filter(function(s){return s.rDiff<-0.05&&s.c2502>0;});
+  var declineStores=gStores.filter(function(s){
+    return !s.excluded&&s[cF]>0&&parseFloat((s[rT]-s[rF]).toFixed(1))<-0.05;
+  });
   // 評分進步門市
-  var improvedStores=gStores.filter(function(s){return s.rDiff>0.05&&s.c2502>0;});
+  var improvedStores=gStores.filter(function(s){
+    return !s.excluded&&s[cF]>0&&parseFloat((s[rT]-s[rF]).toFixed(1))>0.05;
+  });
   // 高聲量低評分
   var highVolLowScore=region.stores.filter(function(s){return s.count>500&&s.rating<4.5;});
   // 新開門市
-  // c2502=0 可能是統計遺漏的舊門市，不全部視為新門市
-  // 以評論數少（c2605<100）且評分極低（r2605<2）視為異常，排除於新門市之外
-  var EXCLUDED_NEW=['士林文林二店']; // 已知統計遺漏的舊門市
   var newStores=gStores.filter(function(s){
-    return s.c2502===0 && EXCLUDED_NEW.indexOf(s.name)<0;
+    return s[cF]===0 && EXCLUDED_NEW.indexOf(s.name)<0;
   });
 
   // ── 正評優點（結合評分與成長資料）──
@@ -895,9 +900,9 @@ function loadRegionSummary(region){
   if(rGrowth>0)
     pros.push('區域平均評分由 '+avgR2502.toFixed(2)+' 升至 '+avgR2605.toFixed(2)+'（+'+rGrowth+'），整體品質進步');
   if(improvedStores.length>0)
-    pros.push('評分提升門市：'+improvedStores.slice(0,3).map(function(s){return s.name+'(+'+s.rDiff+')';}).join('、')+'，改善成效顯著');
-  if(topGrowthStore&&topGrowthStore.cDiff>50)
-    pros.push('評論成長最多：'+topGrowthStore.name+'（+'+topGrowthStore.cDiff+'則），顧客回饋活躍');
+    pros.push('評分提升門市：'+improvedStores.slice(0,3).map(function(s){return s.name+'(+'+(s[rT]-s[rF]).toFixed(1)+')';}).join('、')+'，改善成效顯著');
+  if(topGrowthStore&&(topGrowthStore[cT]-topGrowthStore[cF])>50)
+    pros.push('評論成長最多：'+topGrowthStore.name+'（+'+(topGrowthStore[cT]-topGrowthStore[cF])+'則），顧客回饋活躍');
   pros=pros.filter(function(p){return p;}).slice(0,5);
   if(pros.length===0) pros.push('整體表現穩定，維持良好口碑');
 
@@ -906,7 +911,7 @@ function loadRegionSummary(region){
   if(lowStores.length>0)
     cons.push('低評分門市需優先關注：'+lowStores.map(function(s){return s.name+'（'+s.rating+'）';}).join('、'));
   if(declineStores.length>0)
-    cons.push('評分退步門市：'+declineStores.slice(0,3).map(function(s){return s.name+'（'+s.rDiff+'）';}).join('、')+'，需查明原因');
+    cons.push('評分退步門市：'+declineStores.slice(0,3).map(function(s){return s.name+'（'+(s[rT]-s[rF]).toFixed(1)+'）';}).join('、')+'，需查明原因');
   if(highVolLowScore.length>0)
     cons.push('高聲量但評分偏低：'+highVolLowScore.map(function(s){return s.name+'（'+s.rating+'，'+s.count+'則）';}).join('、')+'，負評影響廣');
   if(rGrowth<0)
@@ -1127,7 +1132,7 @@ function renderGrowth(el){
       var avR1=vStores.length>0?vStores.reduce(function(a,s){return a+s[rF];},0)/vStores.length:avR2;
       var rD=parseFloat((avR2-avR1).toFixed(2));
       return{r:r,c2:c2,c1:c1,cDiff:cDiff,cPct:cPct,avR2:avR2,avR1:avR1,rD:rD};
-    }).sort(function(a,b){return b.cPct-a.cPct;});
+    }).sort(function(a,b){return b.cDiff-a.cDiff||b.cPct-a.cPct;});
   }
 
   function rBadge(diff){
@@ -1511,8 +1516,8 @@ function renderConclusion(el){
   var below44=allS.filter(function(s){return s.rating<4.4;}).length;
   var best=REGIONS.map(function(r){return{r:r,a:rAvg(r)};}).sort(function(a,b){return b.a.avg-a.a.avg;})[0];
   var worst=REGIONS.map(function(r){return{r:r,a:rAvg(r)};}).sort(function(a,b){return a.a.avg-b.a.avg;})[0];
-  var totalC2605=GROWTH_DATA.reduce(function(a,r){return a+r.stores.reduce(function(b,s){return b+s.c2605;},0);},0);
-  var totalC2502=GROWTH_DATA.reduce(function(a,r){return a+r.stores.reduce(function(b,s){return b+s.c2502;},0);},0);
+  var totalC2605=GROWTH_DATA.reduce(function(a,r){return a+r.stores.reduce(function(b,s){return b+s.c0601;},0);},0);
+  var totalC2502=GROWTH_DATA.reduce(function(a,r){return a+r.stores.reduce(function(b,s){return b+s.c0514;},0);},0);
   var totalGrowth=totalC2605-totalC2502;
   var growthPct=Math.round(totalGrowth/totalC2502*100);
   var html='<div class="sec-title">📋 全台結論與改善建議</div>';
