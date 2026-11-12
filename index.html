@@ -246,6 +246,35 @@ input.fi{flex:1;min-width:180px}
 .rpt-summary-bar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}
 .rpt-sum-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;box-shadow:var(--shadow)}
 .rpt-sum-card .val{font-size:1.6rem;font-weight:900}
+/* ── 最新動態統計 ── */
+.upd-header{background:linear-gradient(135deg,#064e3b,#059669);border-radius:12px;padding:20px 24px;margin-bottom:22px;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.upd-header h2{font-size:1.1rem;font-weight:800;margin-bottom:4px}
+.upd-header p{font-size:.75rem;opacity:.85}
+.upd-scan-btn{background:#fff;color:#059669;font-weight:800;font-size:.82rem;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:all .2s}
+.upd-scan-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.upd-scan-btn:disabled{background:#e2e8f0;color:#94a3b8;cursor:not-allowed;transform:none}
+.upd-lock{background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:14px 18px;margin-bottom:16px;font-size:.8rem;color:#166534;display:flex;align-items:center;gap:10px}
+.upd-progress{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:var(--shadow)}
+.upd-prog-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin:10px 0}
+.upd-prog-fill{height:100%;background:linear-gradient(90deg,#059669,#34d399);border-radius:4px;transition:width .4s ease}
+.upd-prog-txt{font-size:.75rem;color:var(--muted);font-weight:600}
+.upd-summary-bar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.upd-sum-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;box-shadow:var(--shadow)}
+.upd-sum-card .val{font-size:1.6rem;font-weight:900}
+.upd-region{margin-bottom:24px}
+.upd-region-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--border)}
+.upd-region-hdr h3{font-size:.9rem;font-weight:800}
+.upd-region-badge{font-size:.65rem;font-weight:700;padding:3px 10px;border-radius:20px;color:#fff}
+.upd-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);margin-bottom:6px}
+.upd-table th{background:var(--surface2);padding:8px 12px;font-size:.75rem;font-weight:700;color:var(--muted);text-align:left;border-bottom:1px solid var(--border)}
+.upd-table td{padding:9px 12px;font-size:.82rem;border-bottom:1px solid #f1f5f9;color:var(--text)}
+.upd-table tr:last-child td{border-bottom:none}
+.upd-table tr:hover td{background:#f8fafc}
+.upd-cnt-badge{display:inline-block;padding:2px 10px;border-radius:12px;font-weight:800;font-size:.8rem}
+.upd-cnt-high{background:#dcfce7;color:#15803d}
+.upd-cnt-mid{background:#fef9c3;color:#a16207}
+.upd-cnt-low{background:#fee2e2;color:#b91c1c}
+.upd-cnt-zero{background:#f1f5f9;color:#94a3b8}
 .rpt-sum-card .lbl{font-size:.65rem;color:var(--muted);font-weight:600;margin-top:2px}
 .rpt-empty{background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:20px;text-align:center;color:#065f46;font-size:.85rem;font-weight:600}
 </style>
@@ -771,6 +800,7 @@ function buildSidebar(){
   html+='<div class="sb-item active" onclick="showView(\'overview\')" id="sb-overview"><div class="sb-dot" style="background:var(--accent)"></div><span class="sb-name">全台統計總覽</span></div>';
   html+='<div class="sb-item" onclick="showView(\'ranking\')" id="sb-ranking"><div class="sb-dot" style="background:var(--green)"></div><span class="sb-name">門市排行榜</span></div>';
   html+='<div class="sb-item" onclick="showView(\'report\')" id="sb-report"><div class="sb-dot" style="background:#dc2626"></div><span class="sb-name">🚨 評論通報</span></div>';
+  html+='<div class="sb-item" onclick="showView(\'updates\')" id="sb-updates"><div class="sb-dot" style="background:#059669"></div><span class="sb-name">📣 最新動態統計</span></div>';
   html+='<div class="sb-item" onclick="showView(\'growth\')" id="sb-growth"><div class="sb-dot" style="background:#0ea5e9"></div><span class="sb-name">📈 評論成長比較</span></div>';
   html+='<div class="sb-item" onclick="showView(\'conclusion\')" id="sb-conclusion"><div class="sb-dot" style="background:var(--blue)"></div><span class="sb-name">結論與建議</span></div>';
   html+='<div class="sb-div"></div><div class="sb-sec">🗂️ 各區負責人</div>';
@@ -802,6 +832,7 @@ function showView(view,rid){
   else if(view==='conclusion')renderConclusion(c);
   else if(view==='region')renderRegion(c,rid);
   else if(view==='report')renderReport(c);
+  else if(view==='updates')renderUpdates(c);
   updateDate();
 }
 
@@ -1669,6 +1700,225 @@ function renderConclusion(el){
 
 // ── 評論通報 ──
 var REPORT_STORAGE_KEY = 'etipets_report_v1';
+/* ════════════════════════════════════════
+   最新動態統計 — Updates Stats
+   ════════════════════════════════════════ */
+var UPDATES_STORAGE_KEY = 'etipets_updates_v1';
+var UPDATES_LOCK_DAYS   = 7;
+var UPDATES_DAYS_RANGE  = 60; // 近 N 天
+
+function getUpdatesCache(){
+  try{ var r=localStorage.getItem(UPDATES_STORAGE_KEY); return r?JSON.parse(r):null; }catch(e){ return null; }
+}
+function saveUpdatesCache(d){
+  try{ localStorage.setItem(UPDATES_STORAGE_KEY, JSON.stringify(d)); }catch(e){}
+}
+function clearUpdatesCache(){
+  localStorage.removeItem(UPDATES_STORAGE_KEY);
+}
+function updatesLockRemaining(scanDate){
+  var scanned=new Date(scanDate).getTime(), now=Date.now();
+  var diff=UPDATES_LOCK_DAYS*24*3600*1000-(now-scanned);
+  if(diff<=0) return 0;
+  return {days:Math.floor(diff/(24*3600*1000)), hours:Math.floor((diff%(24*3600*1000))/(3600*1000))};
+}
+
+/* 取得單一門市近60天最新動態則數
+   流程：
+   1) google_maps 搜尋 → data_id
+   2) google_maps_place_details → updates / posts
+   3) 計算 date >= cutoff 的筆數
+*/
+async function fetchStoreUpdatesCount(store){
+  var PROXY = 'https://etipets-proxy.onrender.com';
+  var cutoff = Date.now() - UPDATES_DAYS_RANGE * 24 * 3600 * 1000;
+
+  // Step 1: 取 data_id
+  var r1 = await fetch(PROXY+'/search?engine=google_maps&q='+encodeURIComponent('東森寵物 '+store.name)+'&hl=zh-tw&gl=tw');
+  if(!r1.ok) throw new Error('search HTTP '+r1.status);
+  var d1 = await r1.json();
+  if(d1.error) throw new Error(d1.error);
+
+  var dataId = null;
+  if(d1.local_results && d1.local_results.length > 0){
+    var matched = null;
+    for(var i=0;i<d1.local_results.length;i++){
+      if(d1.local_results[i].title && d1.local_results[i].title.indexOf(store.name.replace(/[店館院]/g,''))>-1){
+        matched=d1.local_results[i]; break;
+      }
+    }
+    if(!matched) matched=d1.local_results[0];
+    dataId = matched.data_id;
+  } else if(d1.place_results && d1.place_results.data_id){
+    dataId = d1.place_results.data_id;
+  }
+  if(!dataId) return { count: 0, error: 'no_data_id' };
+
+  // Step 2: place details → updates
+  var r2 = await fetch(PROXY+'/search?engine=google_maps_place_details&data_id='+encodeURIComponent(dataId)+'&hl=zh-tw');
+  if(!r2.ok) throw new Error('place_details HTTP '+r2.status);
+  var d2 = await r2.json();
+  if(d2.error) throw new Error(d2.error);
+
+  // SerpApi 回傳 updates 或 posts 欄位
+  var posts = d2.updates || d2.posts || [];
+
+  // Step 3: 計算近60天
+  var cnt = 0;
+  for(var j=0;j<posts.length;j++){
+    var p = posts[j];
+    // SerpApi 的日期欄位可能是 date / date_text / published_date / timestamp
+    var ts = null;
+    if(p.timestamp)             ts = p.timestamp * 1000;
+    else if(p.published_date)   ts = new Date(p.published_date).getTime();
+    else if(p.date)             ts = new Date(p.date).getTime();
+    if(ts && ts >= cutoff) cnt++;
+    // 若無日期資訊但有 posts 存在，仍計入（保守做法：可能是近期）
+    if(!ts && posts.length > 0) cnt = posts.length; // fallback: 全部算入
+  }
+
+  return { count: cnt, dataId: dataId };
+}
+
+async function startUpdatesScan(){
+  var pwd = prompt('🔒 請輸入掃描密碼：');
+  if(pwd === null) return;
+  if(pwd !== 'pet1314'){ alert('❌ 密碼錯誤，掃描取消。'); return; }
+
+  var c = document.getElementById('content');
+
+  var cache = getUpdatesCache();
+  if(cache){
+    var rem = updatesLockRemaining(cache.scanDate);
+    if(rem){ alert('距離下次可掃描還有 '+rem.days+'天'+rem.hours+'小時，請勿重複消耗 API 額度！'); return; }
+  }
+
+  // 建立掃描清單
+  var allStores = [];
+  REGIONS.forEach(function(r){ r.stores.forEach(function(s){ allStores.push({store:s, region:r}); }); });
+  var total = allStores.length, done = 0, failed = 0;
+
+  // 進度 UI
+  c.innerHTML = '<div class="upd-header"><div><h2>📣 最新動態統計</h2><p>掃描中，請勿關閉頁面...</p></div></div>'
+    +'<div class="upd-progress">'
+    +'<div style="font-size:.85rem;font-weight:700;color:var(--text);margin-bottom:8px">正在掃描各門市最新動態...</div>'
+    +'<div class="upd-prog-bar"><div class="upd-prog-fill" id="upd-fill" style="width:0%"></div></div>'
+    +'<div class="upd-prog-txt" id="upd-txt">準備中...</div>'
+    +'<div style="margin-top:10px;font-size:.75rem;color:var(--muted)" id="upd-cur"></div>'
+    +'</div>';
+
+  var resultRegions = REGIONS.map(function(r){
+    return { id:r.id, name:r.name, manager:r.manager, color:r.color,
+      stores: r.stores.map(function(s){ return {name:s.name, url:s.url, count:null, error:null}; }) };
+  });
+
+  for(var i=0;i<allStores.length;i++){
+    var item = allStores[i];
+    var pct = Math.round((i/total)*100);
+    var fillEl=document.getElementById('upd-fill'), txtEl=document.getElementById('upd-txt'), curEl=document.getElementById('upd-cur');
+    if(fillEl) fillEl.style.width=pct+'%';
+    if(txtEl)  txtEl.textContent='進度：'+i+' / '+total+' 間（'+pct+'%）';
+    if(curEl)  curEl.textContent='目前：'+item.region.name+' · '+item.store.name;
+
+    try{
+      var res = await fetchStoreUpdatesCount(item.store);
+      var rr = resultRegions.find(function(r){ return r.id===item.region.id; });
+      if(rr){ var ss=rr.stores.find(function(s){ return s.name===item.store.name; }); if(ss){ ss.count=res.count; ss.error=res.error||null; } }
+      done++;
+    } catch(e){
+      var rr2 = resultRegions.find(function(r){ return r.id===item.region.id; });
+      if(rr2){ var ss2=rr2.stores.find(function(s){ return s.name===item.store.name; }); if(ss2){ ss2.count=0; ss2.error=e.message; } }
+      failed++;
+    }
+    await new Promise(function(res){ setTimeout(res, 600); }); // 間隔避免 rate limit
+  }
+
+  var cacheData = { scanDate:new Date().toISOString(), daysRange:UPDATES_DAYS_RANGE, totalScanned:done, failed:failed, regions:resultRegions };
+  saveUpdatesCache(cacheData);
+  renderUpdatesResults(c, cacheData);
+}
+
+function renderUpdatesResults(el, cache){
+  var scanDate = new Date(cache.scanDate);
+  var dateStr = scanDate.getFullYear()+'/'+(scanDate.getMonth()+1<10?'0':'')+(scanDate.getMonth()+1)+'/'+(scanDate.getDate()<10?'0':'')+scanDate.getDate();
+  var remaining = updatesLockRemaining(cache.scanDate);
+
+  // 彙總
+  var totalPosts=0, totalStoresWithPosts=0;
+  cache.regions.forEach(function(r){ r.stores.forEach(function(s){ totalPosts+=s.count||0; if(s.count>0) totalStoresWithPosts++; }); });
+
+  var html = '<div class="upd-header">'
+    +'<div><h2>📣 最新動態統計</h2><p>近 '+cache.daysRange+' 天發文統計 · 掃描日期：'+dateStr+'</p></div>'
+    +'<button class="upd-scan-btn" id="upd-rescan-btn" onclick="startUpdatesScan()" '+(remaining?'disabled':'')+'>🔄 重新掃描</button>'
+    +'</div>';
+
+  if(remaining){
+    html += '<div class="upd-lock">🔒 距離下次可掃描還有 <strong>'+remaining.days+'天'+remaining.hours+'小時</strong>（鎖定 '+UPDATES_LOCK_DAYS+' 天，節省 API 額度）</div>';
+  }
+
+  // 摘要卡
+  html += '<div class="upd-summary-bar">'
+    +'<div class="upd-sum-card"><div class="val" style="color:#059669">'+totalPosts+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:4px">近60天總發文則數</div></div>'
+    +'<div class="upd-sum-card"><div class="val" style="color:#1e40af">'+totalStoresWithPosts+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:4px">有發文門市數</div></div>'
+    +'<div class="upd-sum-card"><div class="val" style="color:#f59e0b">'+(cache.failed||0)+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:4px">掃描失敗門市</div></div>'
+    +'<div class="upd-sum-card"><div class="val" style="color:#7c3aed">'+cache.totalScanned+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:4px">成功掃描門市</div></div>'
+    +'</div>';
+
+  // 各區明細
+  cache.regions.forEach(function(r){
+    var regionTotal = r.stores.reduce(function(a,s){ return a+(s.count||0); }, 0);
+    var regionActive = r.stores.filter(function(s){ return s.count>0; }).length;
+    html += '<div class="upd-region">'
+      +'<div class="upd-region-hdr">'
+      +'<div class="upd-region-badge" style="background:'+r.color+'">'+r.name+'</div>'
+      +'<h3>'+r.manager+' 區</h3>'
+      +'<span style="font-size:.72rem;color:var(--muted);margin-left:auto">共 '+r.stores.length+' 店 · 近60天合計 <strong style="color:#059669">'+regionTotal+' 則</strong> · 有發文 '+regionActive+' 店</span>'
+      +'</div>'
+      +'<table class="upd-table">'
+      +'<thead><tr><th>門市名稱</th><th style="text-align:center">近60天發文則數</th><th>狀態</th></tr></thead>'
+      +'<tbody>';
+
+    r.stores.forEach(function(s){
+      var cnt = s.count || 0;
+      var badgeClass = cnt>=5?'upd-cnt-high':cnt>=2?'upd-cnt-mid':cnt===1?'upd-cnt-low':'upd-cnt-zero';
+      var badgeText = cnt>0?cnt+'則':'0則';
+      var statusText = s.error==='no_data_id'?'<span style="color:#f59e0b;font-size:.72rem">⚠️ 找不到門市</span>'
+        : s.error?'<span style="color:#dc2626;font-size:.72rem">❌ 掃描失敗</span>'
+        : cnt>0?'<span style="color:#059669;font-size:.72rem">✅ 有發文</span>'
+        : '<span style="color:#94a3b8;font-size:.72rem">— 無動態</span>';
+      html += '<tr>'
+        +'<td><a href="'+s.url+'" target="_blank" style="color:#1e40af;text-decoration:none;font-weight:600">'+s.name+'</a></td>'
+        +'<td style="text-align:center"><span class="upd-cnt-badge '+badgeClass+'">'+badgeText+'</span></td>'
+        +'<td>'+statusText+'</td>'
+        +'</tr>';
+    });
+
+    html += '</tbody></table></div>';
+  });
+
+  el.innerHTML = html;
+}
+
+function renderUpdates(el){
+  var cache = getUpdatesCache();
+  if(!cache){
+    var totalStores = REGIONS.reduce(function(a,r){ return a+r.stores.length; }, 0);
+    var html = '<div class="upd-header">'
+      +'<div><h2>📣 最新動態統計</h2><p>統計全台 '+totalStores+' 間門市近 '+UPDATES_DAYS_RANGE+' 天 Google Maps 最新動態發文則數</p></div>'
+      +'<button class="upd-scan-btn" onclick="startUpdatesScan()">▶ 開始掃描</button>'
+      +'</div>'
+      +'<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:32px;text-align:center;box-shadow:var(--shadow)">'
+      +'<div style="font-size:2.5rem;margin-bottom:12px">📣</div>'
+      +'<div style="font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:8px">尚未進行掃描</div>'
+      +'<div style="font-size:.8rem;color:var(--muted);line-height:1.7">點擊「開始掃描」後，系統將逐一查詢各門市 Google Maps 最新動態<br>統計近 <strong>'+UPDATES_DAYS_RANGE+' 天</strong>內的發文則數，依區彙整顯示。<br><br>'
+      +'<span style="color:#059669;font-weight:600">⚠️ 掃描完成後將鎖定 '+UPDATES_LOCK_DAYS+' 天，避免重複消耗 API 額度</span></div>'
+      +'</div>';
+    el.innerHTML = html;
+  } else {
+    renderUpdatesResults(el, cache);
+  }
+}
+
 var REPORT_LOCK_DAYS = 7;
 
 function getReportCache(){
@@ -1828,6 +2078,10 @@ function renderReportResults(el, cache){
 }
 
 async function startReportScan(){
+  var pwd = prompt('🔒 請輸入掃描密碼：');
+  if(pwd === null) return;
+  if(pwd !== 'pet1314'){ alert('❌ 密碼錯誤，掃描取消。'); return; }
+
   var c = document.getElementById('content');
 
   // Check lock
