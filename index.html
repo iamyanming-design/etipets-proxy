@@ -1726,8 +1726,8 @@ function updatesLockRemaining(scanDate){
 /* 取得單一門市近60天最新動態則數
    流程：
    1) google_maps 搜尋 → data_id
-   2) google_maps_place_details → updates / posts
-   3) 計算 date >= cutoff 的筆數
+   2) google_maps_posts → posts（每頁10筆，逐頁直到超出60天）
+   3) 計算 posted_at >= cutoff 的筆數
 */
 async function fetchStoreUpdatesCount(store){
   var PROXY = 'https://etipets-proxy.onrender.com';
@@ -1754,28 +1754,52 @@ async function fetchStoreUpdatesCount(store){
   }
   if(!dataId) return { count: 0, error: 'no_data_id' };
 
-  // Step 2: place details → updates
-  var r2 = await fetch(PROXY+'/search?engine=google_maps_place_details&data_id='+encodeURIComponent(dataId)+'&hl=zh-tw');
-  if(!r2.ok) throw new Error('place_details HTTP '+r2.status);
-  var d2 = await r2.json();
-  if(d2.error) throw new Error(d2.error);
-
-  // SerpApi 回傳 updates 或 posts 欄位
-  var posts = d2.updates || d2.posts || [];
-
-  // Step 3: 計算近60天
+  // Step 2: google_maps_posts → 逐頁計算近60天則數
   var cnt = 0;
-  for(var j=0;j<posts.length;j++){
-    var p = posts[j];
-    // SerpApi 的日期欄位可能是 date / date_text / published_date / timestamp
-    var ts = null;
-    if(p.timestamp)             ts = p.timestamp * 1000;
-    else if(p.published_date)   ts = new Date(p.published_date).getTime();
-    else if(p.date)             ts = new Date(p.date).getTime();
-    if(ts && ts >= cutoff) cnt++;
-    // 若無日期資訊但有 posts 存在，仍計入（保守做法：可能是近期）
-    if(!ts && posts.length > 0) cnt = posts.length; // fallback: 全部算入
-  }
+  var nextPageToken = null;
+  var pagesDone = 0;
+  var maxPages = 5; // 最多抓5頁(50則)，超過60天就停止
+
+  do {
+    var url = PROXY+'/search?engine=google_maps_posts&data_id='+encodeURIComponent(dataId)+'&hl=zh-tw';
+    if(nextPageToken) url += '&next_page_token='+encodeURIComponent(nextPageToken);
+
+    var r2 = await fetch(url);
+    if(!r2.ok) throw new Error('posts HTTP '+r2.status);
+    var d2 = await r2.json();
+    if(d2.error) throw new Error(d2.error);
+
+    var posts = d2.posts || [];
+    if(posts.length === 0) break;
+
+    var hitOld = false;
+    for(var j=0;j<posts.length;j++){
+      var p = posts[j];
+      // posted_at 是 ISO 8601 格式，例如 "2026-10-15T08:30:00Z"
+      var ts = null;
+      if(p.posted_at)      ts = new Date(p.posted_at).getTime();
+      else if(p.from)      ts = new Date(p.from).getTime();
+      else if(p.time)      ts = new Date(p.time).getTime();
+
+      if(ts !== null){
+        if(ts >= cutoff) cnt++;
+        else { hitOld = true; break; } // 已超出60天，停止翻頁
+      } else {
+        // 無日期資訊：保守計入
+        cnt++;
+      }
+    }
+
+    pagesDone++;
+    nextPageToken = (d2.serpapi_pagination && d2.serpapi_pagination.next_page_token) || null;
+
+    // 若遇到超出60天的動態、或無下一頁、或達到最大頁數，停止
+    if(hitOld || !nextPageToken || pagesDone >= maxPages) break;
+
+    // 翻頁間隔
+    await new Promise(function(res){ setTimeout(res, 400); });
+
+  } while(true);
 
   return { count: cnt, dataId: dataId };
 }
